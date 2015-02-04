@@ -102,7 +102,7 @@ class MainWindow(wx.Frame):
         ##-- Menu Bar
         self.menuBar = wx.MenuBar()
 
-        #--  Menu File        
+        #--  Menu File
         self.menuFile = wx.Menu()
         self.menuLaunchWizard = self.menuFile.Append(wx.NewId(), _("Launch Wizard"))
         self.menuFile.AppendSeparator()
@@ -417,22 +417,22 @@ class MainWindow(wx.Frame):
         info.SetDescription(_('Horus is an Open Source 3D Scanner manager'))
         info.SetCopyright(u'(C) 2014-2015 Mundo Reader S.L.')
         info.SetWebSite(u'http://www.bq.com')
-        info.SetLicence("""Horus is free software; you can redistribute 
-it and/or modify it under the terms of the GNU General Public License as 
+        info.SetLicence("""Horus is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Horus is distributed in the hope that it will be useful, 
-but WITHOUT ANY WARRANTY; without even the implied warranty of 
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-See the GNU General Public License for more details. You should have 
-received a copy of the GNU General Public License along with File Hunter; 
-if not, write to the Free Software Foundation, Inc., 59 Temple Place, 
+Horus is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details. You should have
+received a copy of the GNU General Public License along with File Hunter;
+if not, write to the Free Software Foundation, Inc., 59 Temple Place,
 Suite 330, Boston, MA  02111-1307  USA""")
         info.AddDeveloper(u'Jesús Arroyo, Irene Sanz')
         info.AddDocWriter(u'Jesús Arroyo')
         info.AddArtist(u'Jesús Arroyo, Nestor Toribio')
-        info.AddTranslator(u'Jesús Arroyo, Irene Sanz')
+        info.AddTranslator(u'Jesús Arroyo, Irene Sanz, Alexandre Galode')
 
         wx.AboutBox(info)
 
