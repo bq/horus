@@ -43,7 +43,9 @@ from OpenGL.GLU import *
 from OpenGL.GL import *
 from OpenGL.GL import shaders
 
-glutInit() #Hack; required before glut can be called. Not required for all OS.
+from sys import platform as _platform
+if _platform!='darwin':
+	glutInit() #Hack; required before glut can be called. Not required for all OS.
 
 class GLReferenceCounter(object):
 	def __init__(self):
