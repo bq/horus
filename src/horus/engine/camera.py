@@ -99,8 +99,7 @@ class Camera:
 			self.capture.close()
 		
 		self.capture = uvc.autoCreateCapture(self.cameraId,(self.width,self.height))
-		self.capture.controls['UVCC_REQ_EXPOSURE_AUTOMODE'].set_val(0);
-		self.capture.controls['UVCC_REQ_EXPOSURE_AUTOPRIO'].set_val(0);
+		
 		
 		
 		
@@ -125,6 +124,7 @@ class Camera:
 
 	def checkCamera(self):
 		""" Checks correct camera """
+		self.capture.controls['UVCC_REQ_EXPOSURE_AUTOMODE'].set_val(1);
 		print "Exposure {0}".format(self.capture.controls['UVCC_REQ_EXPOSURE_ABS'].get_val())
 		self.setExposure(2)
 		print "Exposure {0}".format(self.capture.controls['UVCC_REQ_EXPOSURE_ABS'].get_val())
@@ -217,7 +217,8 @@ class Camera:
 			else:
 				value = int(value) / self.maxExposure
 			
-			print "Exposure REQUESTED {0}".format(value)	
+			print "Exposure REQUESTED {0}".format(value)
+			
 			self.capture.controls['UVCC_REQ_EXPOSURE_ABS'].set_val(value)
 			#self.capture.set(cv2.cv.CV_CAP_PROP_EXPOSURE, value)
 

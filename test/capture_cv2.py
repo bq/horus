@@ -1,8 +1,9 @@
 import cv
+import cv2
 
 import hardware.uvc_capture as uvc
 
-cv.NamedWindow("w1", cv.CV_WINDOW_AUTOSIZE)
+cv2.namedWindow("w1", cv2.CV_WINDOW_AUTOSIZE)
 camera_index = 0
 
 
@@ -25,11 +26,12 @@ def repeat():
     
     #print frame.img
     
-    cv.ShowImage("w1", cv.fromarray(frame.img))
+    cv2.imshow("w1", frame.img)
     #cv.ShowImage("w1", frame)
-    c = cv.WaitKey(10)
+    c = cv2.waitKey(10)
     
     if (c!=-1):
+        print c
         if (chr(c)=='+'):
             cap.controls['UVCC_REQ_EXPOSURE_ABS'].set_val(1000)
             
