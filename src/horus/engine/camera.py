@@ -186,7 +186,7 @@ class Camera:
 				self.unplugCallback()
 
 	def getResolution(self):
-		return self.height, self.width #-- Inverted values because of transpose
+		return int(self.height), int(self.width) #-- Inverted values because of transpose
 
 	def setBrightness(self, value):
 		if self.isConnected:
@@ -256,7 +256,7 @@ class Camera:
 	def setIntrinsics(self, cameraMatrix, distortionVector):
 		self.cameraMatrix = cameraMatrix
 		self.distortionVector = distortionVector
-		self.distCameraMatrix = cv2.getOptimalNewCameraMatrix(self.cameraMatrix, self.distortionVector, (self.width,self.height), alpha=1)[0]
+		self.distCameraMatrix = cv2.getOptimalNewCameraMatrix(self.cameraMatrix, self.distortionVector, (int(self.width),int(self.height)), alpha=1)[0]
 
 	def getExposure(self):
 		if self.isConnected:
