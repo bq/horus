@@ -18,7 +18,10 @@ Three classes:
     Control is the actual Control with methods for getting and setting them.
 """
 import sys
-#import atb
+try:
+    import atb
+except:
+    pass
 from time import time
 from raw import *
 from cv2 import VideoCapture

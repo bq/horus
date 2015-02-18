@@ -79,28 +79,35 @@ UVC_GET_INFO     = 0x86
 UVC_GET_DEF      = 0x87
 
 ### we use a dict to mimic an enum
-uvcc_controls = ('UVCC_REQ_SCANNING_MODE',
-                'UVCC_REQ_EXPOSURE_AUTOMODE',
-                'UVCC_REQ_EXPOSURE_AUTOPRIO',
-                'UVCC_REQ_EXPOSURE_ABS',
-                'UVCC_REQ_EXPOSURE_REL',
-                'UVCC_REQ_FOCUS_AUTO',
-                'UVCC_REQ_FOCUS_ABS',
-                'UVCC_REQ_FOCUS_REL',
-                'UVCC_REQ_IRIS_ABS',
-                'UVCC_REQ_IRIS_REL',
-                'UVCC_REQ_ZOOM_ABS',
-                'UVCC_REQ_BACKLIGHT_COMPENSATION_ABS',
-                'UVCC_REQ_BRIGHTNESS_ABS',
-                'UVCC_REQ_CONTRAST_ABS',
-                'UVCC_REQ_GAIN_ABS',
-                'UVCC_REQ_POWER_LINE_FREQ',
-                'UVCC_REQ_SATURATION_ABS',
-                'UVCC_REQ_SHARPNESS_ABS',
-                'UVCC_REQ_GAMMA_ABS',
-                'UVCC_REQ_WB_TEMP_AUTO',
-                'UVCC_REQ_WB_TEMP_ABS',
-                '__UVCC_REQ_OUT_OF_RANGE')
+uvcc_controls = (
+'UVCC_REQ_SCANNING_MODE',
+'UVCC_REQ_EXPOSURE_AUTOMODE',
+'UVCC_REQ_EXPOSURE_AUTOPRIO',
+'UVCC_REQ_EXPOSURE_ABS',
+'UVCC_REQ_EXPOSURE_REL',
+'UVCC_REQ_FOCUS_AUTO',
+'UVCC_REQ_FOCUS_ABS',
+'UVCC_REQ_FOCUS_REL',
+'UVCC_REQ_IRIS_ABS',
+'UVCC_REQ_IRIS_REL',
+'UVCC_REQ_ZOOM_ABS',
+'UVCC_REQ_BACKLIGHT_COMPENSATION_ABS',
+'UVCC_REQ_BRIGHTNESS_ABS',
+'UVCC_REQ_CONTRAST_ABS',
+'UVCC_REQ_GAIN_ABS',
+'UVCC_REQ_POWER_LINE_FREQ',
+'UVCC_REQ_HUE_AUTO',
+'UVCC_REQ_HUE_ABS',
+'UVCC_REQ_SATURATION_ABS',
+'UVCC_REQ_SHARPNESS_ABS',
+'UVCC_REQ_GAMMA_ABS',
+'UVCC_REQ_WB_TEMP_AUTO',
+'UVCC_REQ_WB_TEMP_ABS',
+'UVCC_REQ_WB_COMPONENT_AUTO',
+'UVCC_REQ_WB_COMPONENT_ABS',
+'__UVCC_REQ_OUT_OF_RANGE'
+                
+                )
 control_dict = dict(zip(uvcc_controls,range(len(uvcc_controls))))
 
 
