@@ -80,6 +80,9 @@ class Board:
 
 	def connect(self):
 		""" Opens serial port and performs handshake"""
+		
+		self.serialName='/dev/tty.wchusbserial1420'
+		
 		print ">>> Connecting board {0} {1}".format(self.serialName, self.baudRate)
 		self.isConnected = False
 		try:
