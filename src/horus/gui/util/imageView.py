@@ -29,6 +29,7 @@ __license__ = "GNU General Public License v2 http://www.gnu.org/licenses/gpl.htm
 
 import wx._core
 import threading
+import sys
 
 from horus.util.resources import *
 
@@ -130,7 +131,7 @@ class VideoView(ImageView):
 
 	def play(self):
 		self.playing = True
-		if os.name == 'nt':
+		if os.name == 'nt' or sys.platform=='darwin':
 			self._start()
 		else:
 			threading.Thread(target=self._start).start()
