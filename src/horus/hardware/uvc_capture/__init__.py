@@ -107,6 +107,10 @@ def filter_sizes(cam,size):
 
     return size
 
+def map(x,in_min, in_max, out_min, out_max):
+    """Arduino rules!"""
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+
 
 if __name__ == '__main__':
     cap = autoCreateCapture(1,(1280,720),30)

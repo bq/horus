@@ -190,37 +190,44 @@ class Camera:
 
 	def setBrightness(self, value):
 		if self.isConnected:
-			value = int(value)/self.maxBrightness
-			self.capture.controls['UVCC_REQ_BRIGHTNESS_ABS'].set_val(int(value))
-			#self.capture.set(cv2.cv.CV_CAP_PROP_BRIGHTNESS, value)
+			if platform.system() == 'Darwin':
+				ctl=self.capture.controls['UVCC_REQ_BRIGHTNESS_ABS']
+				ctl.set_val(int(uvc.map(value,0,self.maxBrightness,ctl.min, ctl.max)))
+				
+			else:
+				value = int(value)/self.maxBrightness
+				self.capture.set(cv2.cv.CV_CAP_PROP_BRIGHTNESS, value)
 
 	def setContrast(self, value):
 		if self.isConnected:
-			value = int(value)/self.maxContrast
-			
-			self.capture.controls['UVCC_REQ_CONTRAST_ABS'].set_val(int(value))
-			
-			#self.capture.set(cv2.cv.CV_CAP_PROP_CONTRAST, value)
+			if platform.system() == 'Darwin':
+				ctl=self.capture.controls['UVCC_REQ_CONTRAST_ABS']
+				ctl.set_val(int(uvc.map(value,0,self.maxContrast,ctl.min, ctl.max)))
+			else:
+				value = int(value)/self.maxContrast
+				self.capture.set(cv2.cv.CV_CAP_PROP_CONTRAST, value)
 
 	def setSaturation(self, value):
 		if self.isConnected:
-			value = int(value)/self.maxSaturation
-			self.capture.controls['UVCC_REQ_SATURATION_ABS'].set_val(int(value))
-			#self.capture.set(cv2.cv.CV_CAP_PROP_SATURATION, value)
+			if platform.system() == 'Darwin':
+				ctl=self.capture.controls['UVCC_REQ_SATURATION_ABS']
+				ctl.set_val(int(uvc.map(value,0,self.maxSaturation,ctl.min, ctl.max)))
+			else:
+				value = int(value)/self.maxSaturation
+				self.capture.set(cv2.cv.CV_CAP_PROP_SATURATION, value)
 
 	def setExposure(self, value):
 		if self.isConnected:
-			if platform.system() == 'Windows':
+			if platform.system() == 'Darwin':
+				ctl=self.capture.controls['UVCC_REQ_EXPOSURE_ABS']
+				ctl.set_val(int(uvc.map(value,0,self.maxExposure,ctl.min, ctl.max)))
+			elif platform.system() == 'Windows':
 				value = int(round(-math.log(value)/math.log(2)))
-			elif platform.system() == 'Darwin':
-				value = int(value)
+				self.capture.set(cv2.cv.CV_CAP_PROP_EXPOSURE, value)
 			else:
 				value = int(value) / self.maxExposure
+				self.capture.set(cv2.cv.CV_CAP_PROP_EXPOSURE, value)
 			
-			print "Exposure REQUESTED {0}".format(value)
-			
-			self.capture.controls['UVCC_REQ_EXPOSURE_ABS'].set_val(value)
-			#self.capture.set(cv2.cv.CV_CAP_PROP_EXPOSURE, value)
 
 	def setFrameRate(self, value):
 		if self.isConnected:
@@ -261,13 +268,13 @@ class Camera:
 
 	def getExposure(self):
 		if self.isConnected:
-			#value = self.capture.get(cv2.cv.CV_CAP_PROP_EXPOSURE)
-			value = self.capture.controls['UVCC_REQ_EXPOSURE_ABS'].get_val()
-			
-			if platform.system() == 'Windows':
+			if platform.system() == 'Darwin':
+				ctl = self.capture.controls['UVCC_REQ_EXPOSURE_ABS']
+				value=int(uvc.map(ctl.get_val(),ctl.min, ctl.max, 0, self.maxExposure))
+			elif platform.system() == 'Windows':
+				value = self.capture.get(cv2.cv.CV_CAP_PROP_EXPOSURE)
 				value = 2**-value
-			elif platform.system() == 'Darwin':
-				pass
 			else:
+				value = self.capture.get(cv2.cv.CV_CAP_PROP_EXPOSURE)
 				value *= self.maxExposure
 			return value
