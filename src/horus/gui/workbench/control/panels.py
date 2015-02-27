@@ -57,7 +57,7 @@ class CameraControl(ExpandablePanel):
         section.addItem(Slider, 'exposure_control', self.driver.camera.setExposure)
         section.addItem(ComboBox, 'framerate_control', lambda v: self.driver.camera.setFrameRate(int(v)))
         section.addItem(ComboBox, 'resolution_control', lambda v: self.driver.camera.setResolution(int(v.split('x')[0]), int(v.split('x')[1])))
-        section.addItem(CheckBox, 'use_distortion_control', self.driver.camera.setUseDistortion)
+        section.addItem(CheckBox, 'use_distortion_control', self.driver.camera.setUseDistortion, tooltip=_("Use the distortion vector to remove the distortion caused by the camera from the image. This process slows the video feed from the camera."))
 
 
 class LaserControl(ExpandablePanel):

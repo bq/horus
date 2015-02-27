@@ -31,6 +31,7 @@ import wx._core
 import time
 
 from horus.gui.util.imageView import ImageView
+from horus.gui.util.patternDistanceWindow import PatternDistanceWindow
 
 from horus.gui.wizard.wizardPage import WizardPage
 
@@ -52,8 +53,10 @@ class CalibrationPage(WizardPage):
 		self.cameraIntrinsics = calibration.CameraIntrinsics.Instance()
 		self.laserTriangulation = calibration.LaserTriangulation.Instance()
 		self.platformExtrinsics = calibration.PlatformExtrinsics.Instance()
+		self.phase='other'
 
-		self.patternLabel = wx.StaticText(self.panel, label=_("Put the pattern on the platform and press \"Calibrate\""))
+		self.patternLabel = wx.StaticText(self.panel, label=_("Put the pattern on the platform as shown in the picture and press \"Calibrate\""))
+		self.patternLabel.Wrap(400)
 		self.imageView = ImageView(self.panel)
 		self.imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-right.jpg")))
 		self.calibrateButton = wx.Button(self.panel, label=_("Calibrate"))
@@ -89,6 +92,7 @@ class CalibrationPage(WizardPage):
 		self.videoView.setMilliseconds(20)
 		self.videoView.setCallback(self.getFrame)
 
+
 	def onShow(self, event):
 		if event.GetShow():
 			self.skipButton.Enable()
@@ -102,15 +106,15 @@ class CalibrationPage(WizardPage):
 
 	def getFrame(self):
 		if self.platformCalibration:
-			frame = self.platformExtrinsics.getImage()
+			frame=self.platformExtrinsics.getImage()
 		else:
-			frame = self.laserTriangulation.getImage()
-
-		if frame is None:
+			frame=self.laserTriangulation.getImage()
+		if frame is None or self.phase == 'other':
 			frame = self.driver.camera.captureImage()
 			if frame is not None:
 				retval, frame = self.cameraIntrinsics.detectChessboard(frame)
 		return frame
+
 
 	def onUnplugged(self):
 		self.videoView.stop()
@@ -119,14 +123,19 @@ class CalibrationPage(WizardPage):
 		self.enableNext = True
 
 	def onCalibrationButtonClicked(self, event):
+		self.phase='laserTriangulation'
 		self.platformCalibration = False
 		self.laserTriangulation.setCallbacks(self.beforeCalibration,
 											 lambda p: wx.CallAfter(self.progressLaserCalibration,p),
 											 lambda r: wx.CallAfter(self.afterLaserCalibration,r))
-		self.laserTriangulation.start()
+		if profile.getProfileSettingFloat('pattern_distance') == 0:
+			a=PatternDistanceWindow(self)
+		else:
+			self.laserTriangulation.start()
 
 	def onCancelButtonClicked(self, event):
-		self.resultLabel.SetLabel("Calibration canceled. To try again press \"Calibrate\"")
+		self.phase='other'
+		self.resultLabel.SetLabel(_("Calibration canceled. To try again press \"Calibrate\""))
 		self.platformExtrinsics.cancel()
 		self.laserTriangulation.cancel()
 		self.skipButton.Enable()
@@ -150,6 +159,7 @@ class CalibrationPage(WizardPage):
 		self.gauge.SetValue(progress*0.7)
 
 	def afterLaserCalibration(self, response):
+		self.phase='platformCalibration'
 		self.platformCalibration = True
 		ret, result = response
 
@@ -164,7 +174,7 @@ class CalibrationPage(WizardPage):
 			self.platformExtrinsics.start()
 		else:
 			if result == Error.CalibrationError:
-				self.resultLabel.SetLabel("Error in lasers: please connect the lasers and try again")
+				self.resultLabel.SetLabel(_("Error in lasers: please connect the lasers and try again"))
 				dlg = wx.MessageDialog(self, _("Laser Calibration failed. Please try again"), Error.str(result), wx.OK|wx.ICON_ERROR)
 				dlg.ShowModal()
 				dlg.Destroy()
@@ -175,6 +185,7 @@ class CalibrationPage(WizardPage):
 		self.gauge.SetValue(70 + progress*0.3)	
 
 	def afterPlatformCalibration(self, response):
+		self.phase='other'
 		self.platformCalibration = False
 		ret, result = response
 		
@@ -183,7 +194,7 @@ class CalibrationPage(WizardPage):
 			profile.putProfileSettingNumpy('translation_vector', result[1])
 		else:
 			if result == Error.CalibrationError:
-				self.resultLabel.SetLabel("Error in pattern: please check the pattern and try again")
+				self.resultLabel.SetLabel(_("Error in pattern: please check the pattern and try again"))
 				dlg = wx.MessageDialog(self, _("Platform Calibration failed. Please try again"), Error.str(result), wx.OK|wx.ICON_ERROR)
 				dlg.ShowModal()
 				dlg.Destroy()
@@ -191,7 +202,7 @@ class CalibrationPage(WizardPage):
 		if ret:
 			self.skipButton.Disable()
 			self.nextButton.Enable()
-			self.resultLabel.SetLabel("All OK. Please press next to continue")
+			self.resultLabel.SetLabel(_("All OK. Please press next to continue"))
 		else:
 			self.skipButton.Enable()
 			self.nextButton.Disable()

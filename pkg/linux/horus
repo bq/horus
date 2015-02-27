@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/python /usr/lib/python2.7/dist-packages/horus/src/horus.py "$@"

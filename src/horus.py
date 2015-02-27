@@ -30,17 +30,14 @@ __license__ = "GNU General Public License v2 http://www.gnu.org/licenses/gpl.htm
 
 try:
     import serial
+    import wx
     import OpenGL
     import numpy
     import scipy
     import matplotlib
     import cv2
-    import wx
 except ImportError as e:
-    #module = e.message.lstrip('No module named ')
     print e.message
-    #print "Requires " + module
-    #print "Try sudo apt-get install " + module
     exit(1)
 
 from horus.gui import app

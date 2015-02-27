@@ -56,7 +56,7 @@ class PatternSettingsPanel(ExpandablePanel):
         section.addItem(TextBox, 'square_width', lambda v: self.updatePatternParameters())
         section.addItem(TextBox, 'pattern_rows', lambda v: self.updatePatternParameters())
         section.addItem(TextBox, 'pattern_columns', lambda v: self.updatePatternParameters())
-        section.addItem(TextBox, 'pattern_distance', lambda v: self.updatePatternParameters())
+        section.addItem(TextBox, 'pattern_distance', lambda v: self.updatePatternParameters(), tooltip=_('Distance between the upper edge of the chess row closer to the platform and the platform.'))
 
     def updatePatternParameters(self):
         self.cameraIntrinsics.setPatternParameters(profile.getProfileSettingInteger('pattern_rows'),
@@ -97,7 +97,7 @@ class CameraSettingsPanel(ExpandablePanel):
         section.addItem(Slider, 'exposure_calibration', self.driver.camera.setExposure)
         section.addItem(ComboBox, 'framerate_calibration', lambda v: self.driver.camera.setFrameRate(int(v)))
         section.addItem(ComboBox, 'resolution_calibration', lambda v: self.driver.camera.setResolution(int(v.split('x')[0]), int(v.split('x')[1])))
-        section.addItem(CheckBox, 'use_distortion_calibration', self.driver.camera.setUseDistortion)
+        section.addItem(CheckBox, 'use_distortion_calibration', self.driver.camera.setUseDistortion, tooltip=_("Use the distortion vector to remove the distortion caused by the camera from the image. This process slows the video feed from the camera."))
 
 class LaserSettingsPanel(ExpandablePanel):
     def __init__(self, parent):
@@ -112,7 +112,7 @@ class LaserSettingsPanel(ExpandablePanel):
     def initialize(self):
         self.clearSections()
         section = self.createSection('laser_settings')
-        section.addItem(Slider, 'laser_threshold_value', self.laserTriangulation.setThreshold)
+        # section.addItem(Slider, 'laser_threshold_value', self.laserTriangulation.setThreshold, tooltip=_("Value that determines wich pixels belong to the laser and which to the rest of the image. A low value may cause noise errors on the final scanned model, and a high value may reduce its accuracy."))
         section.addItem(ToggleButton, 'left_button', (self.driver.board.setLeftLaserOn, self.driver.board.setLeftLaserOff))
         section.addItem(ToggleButton, 'right_button', (self.driver.board.setRightLaserOn, self.driver.board.setRightLaserOff))
 
@@ -120,13 +120,15 @@ class LaserSettingsPanel(ExpandablePanel):
 
 class CalibrationPanel(ExpandablePanel):
 
-    def __init__(self, parent, titleText="Workbench", buttonStartCallback=None, description="Workbench description"):
+    def __init__(self, parent, titleText="Workbench", buttonStartCallback=None, description="_(Workbench description)"):
         ExpandablePanel.__init__(self, parent, titleText, hasUndo=False, hasRestore=False)
 
         self.buttonStartCallback = buttonStartCallback
 
         self.parametersBox = wx.BoxSizer(wx.VERTICAL)
         self.buttonsPanel = wx.Panel(self.content)
+        self.SetToolTip(wx.ToolTip(description))
+
 
         self.buttonEdit = wx.ToggleButton(self.buttonsPanel, wx.NewId(), label=_("Edit"))
         self.buttonEdit.SetMinSize((0,-1))

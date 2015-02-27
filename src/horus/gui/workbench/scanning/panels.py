@@ -51,13 +51,15 @@ class ScanParameters(ExpandablePanel):
         self.textureScan = TextureScan.Instance()
         self.pcg = PointCloudGenerator.Instance()
         self.main = self.GetParent().GetParent().GetParent().GetParent()
+        self.parent = parent
+        self.lastScan = profile.getProfileSetting('scan_type')
 
         self.initialize()
         
     def initialize(self):
         self.clearSections()
         section = self.createSection('scan_parameters')
-        section.addItem(ComboBox, 'scan_type', self.setCurrentScan, dropdown=True)
+        section.addItem(ComboBox, 'scan_type', self.setCurrentScan, dropdown=True, tooltip=_("It is possible to scan with texture (the color of the object is extracted, together with it's geometry) or without texture (only the geometry is extracted)."))
         section.addItem(ComboBox, 'use_laser', self.setUseLaser, dropdown=True)
         if os.name != 'nt':
             section.addItem(CheckBox, 'fast_scan', self.setFastScan)
@@ -67,13 +69,18 @@ class ScanParameters(ExpandablePanel):
         self.textureScan.setFastScan(bool(value))
 
     def setUseLaser(self, value):
-        self.pcg.setUseLaser(value==_("Use Left Laser") or value==_("Use Both Laser"),
-                             value==_("Use Right Laser") or value==_("Use Both Laser"))
+        self.pcg.setUseLaser(value==_("Left") or value==_("Both"),
+                             value==_("Right") or value==_("Both"))
 
     def setCurrentScan(self, value):
+        if self.lastScan != value :
+            self.lastScan = value
+            self.parent.updateProfile()
+
         if not self.main.currentScan.run or self.main.currentScan.inactive:
             if value == _("Without Texture"):
                 self.main.currentScan = self.simpleScan
+                profile.putProfileSetting('scan_type',  _("Without Texture"))
             elif value == _("With Texture"):
                 self.main.currentScan = self.textureScan
         else:
@@ -154,7 +161,7 @@ class ImageAcquisition(ExpandablePanel):
         section.addItem(Slider, 'color_exposure_scanning', self.setColorExposure)
         section.addItem(ComboBox, 'framerate_scanning', lambda v: self.driver.camera.setFrameRate(int(v)))
         section.addItem(ComboBox, 'resolution_scanning', lambda v: self.driver.camera.setResolution(int(v.split('x')[0]), int(v.split('x')[1])))
-        #section.addItem(CheckBox, 'use_distortion_scanning', lambda v: self.driver.camera.setUseDistortion(v)))
+        section.addItem(CheckBox, 'use_distortion_scanning', lambda v: self.driver.camera.setUseDistortion(v), tooltip=_("Use the distortion vector to remove the distortion caused by the camera from the image. This process slows the video feed from the camera."))
 
     def setLaserExposure(self, value):
         if self.main.currentScan is self.simpleScan:
@@ -180,15 +187,14 @@ class ImageSegmentation(ExpandablePanel):
         
     def initialize(self):
         self.clearSections()
-        section = self.createSection('image_segmentation_simple', _("Simple Scan"))
-        section.addItem(CheckBox, 'use_cr_threshold', lambda v: self.simpleScan.setUseThreshold(bool(v)))
+        section = self.createSection('image_segmentation_simple',None, tag=_("Without Texture"))
+        section.addItem(CheckBox, 'use_cr_threshold', lambda v: self.simpleScan.setUseThreshold(bool(v)), tooltip=_("The threshold is used to remove noise."))
         section.addItem(Slider, 'cr_threshold_value', lambda v: self.simpleScan.setThresholdValue(int(v)))
-        section = self.createSection('image_segmentation_texture', _("Texture Scan"))
-        section.addItem(CheckBox, 'use_open', lambda v: self.textureScan.setUseOpen(bool(v)))
+        section = self.createSection('image_segmentation_texture', None, tag=_("With Texture"))
+        section.addItem(CheckBox, 'use_open', lambda v: self.textureScan.setUseOpen(bool(v)), tooltip=_("Open is an algorithm used to remove the noise when scanning. The higher its value, the lower the noise but also the lower the detail in the 3D model. The value of the Threshold parameter has influence in this algorithm."))
         section.addItem(Slider, 'open_value', lambda v: self.textureScan.setOpenValue(int(v)))
-        section.addItem(CheckBox, 'use_threshold', lambda v: self.textureScan.setUseThreshold(bool(v)))
+        section.addItem(CheckBox, 'use_threshold', lambda v: self.textureScan.setUseThreshold(bool(v)), tooltip=_("The threshold is used to remove noise."))
         section.addItem(Slider, 'threshold_value', lambda v: self.textureScan.setThresholdValue(int(v)))
-
 
 class PointCloudGeneration(ExpandablePanel):
     """"""
@@ -206,7 +212,7 @@ class PointCloudGeneration(ExpandablePanel):
     def initialize(self):
         self.clearSections()
         section = self.createSection('point_cloud_generation')
-        section.addItem(CheckBox, 'view_roi', lambda v: (self.pcg.setViewROI(bool(v)), self.main.sceneView.QueueRefresh()))
+        section.addItem(CheckBox, 'view_roi', lambda v: (self.pcg.setViewROI(bool(v)), self.main.sceneView.QueueRefresh()), tooltip=_("View the Region Of Interest (ROI). This region is the one being scanned. All information outside it will not be taken into account in the scanning process."))
 
         section.addItem(Slider, 'roi_diameter', lambda v: (self.pcg.setROIDiameter(int(v)), self.main.sceneView.QueueRefresh()))
         section.addItem(Slider, 'roi_height', lambda v: (self.pcg.setROIHeight(int(v)), self.main.sceneView.QueueRefresh()))

@@ -1,0 +1,13 @@
+Source: horus
+Maintainer: Jesús Arroyo Torrens <jesus.arroyo@bq.com>
+Section: misc
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7.4.3)
+Standards-Version: 3.9.1
+
+Package: horus
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, python, python-serial, python-wxgtk2.8, python-opengl, python-pyglet, python-numpy, python-scipy, python-matplotlib, python-opencv, avrdude, libftdi1, v4l-utils
+Description: Horus is a full software solution for 3D scanning
+
+

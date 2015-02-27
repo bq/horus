@@ -67,7 +67,7 @@ class setting(object):
 		Settings have validators that check if the value is valid, but do not prevent invalid values!
 		Settings have conditions that enable/disable this setting depending on other settings.
 	"""
-	def __init__(self, name, default, type, category, subcategory, store=True):
+	def __init__(self, name, default, type, category, subcategory, store=True, tag=None):
 		self._name = name
 		self._label = subcategory
 		self._tooltip = ''
@@ -79,6 +79,7 @@ class setting(object):
 		self._validators = []
 		self._conditions = []
 		self._store = store
+		self._tag = tag
 
 		if type is types.FloatType:
 			validators.validFloat(self)
@@ -118,6 +119,9 @@ class setting(object):
 
 	def getCategory(self):
 		return self._category
+
+	def getTag(self):
+		return self._tag
 
 	def getSubCategory(self):
 		return self._subcategory
@@ -223,7 +227,7 @@ setting('resolution_calibration', str('1280x960'), [str('1280x960'), str('960x72
 setting('use_distortion_calibration', False, bool, 'advanced', _('Use Distortion'))
 
 setting('scan_type', _("With Texture"), [_("Without Texture"), _("With Texture")], 'basic', _('Scan Type'))
-setting('use_laser', _("Use Right Laser"), [_("Use Left Laser"), _("Use Right Laser"), _("Use Both Laser")], 'basic', _('Use Laser'))
+setting('use_laser', _("Right"), [_("Left"), _("Right"), _("Both")], 'basic', _('Use Laser'))
 setting('fast_scan', False, bool, 'advanced', _('Fast Scan (experimental)'))
 
 setting('step_degrees_scanning', 0.45, float, 'basic', _('Step Degrees')).setRange(0.01)
@@ -234,20 +238,20 @@ setting('brightness_scanning', 100, int, 'advanced', _('Brightness')).setRange(0
 setting('contrast_scanning', 32, int, 'advanced', _('Contrast')).setRange(0, 255)
 setting('saturation_scanning', 32, int, 'advanced', _('Saturation')).setRange(0, 255)
 setting('exposure_scanning', 16, int, 'basic', _('Exposure')).setRange(1, 512)
-setting('laser_exposure_scanning', 6, int, 'basic', _('Laser Exposure')).setRange(1, 512)
-setting('color_exposure_scanning', 10, int, 'basic', _('Color Exposure')).setRange(1, 512)
+setting('laser_exposure_scanning', 6, int, 'basic', _('Exposure'), tag='no_texture').setRange(1, 512)
+setting('color_exposure_scanning', 10, int, 'basic', _('Exposure'), tag='texture').setRange(1, 512)
 setting('framerate_scanning', str('30'), [str('30'), str('25'), str('20'), str('15'), str('10'), str('5')], 'advanced', _('Framerate'))
 setting('resolution_scanning', str('1280x960'), [str('1280x960'), str('960x720'), str('800x600'), str('320x240'), str('160x120')], 'advanced', _('Resolution'))
 setting('use_distortion_scanning', False, bool, 'advanced', _('Use Distortion'))
 
 setting('img_type', 'laser', ['laser', 'gray', 'line', 'color'], 'advanced', _('Image Type'))
 
-setting('use_open', True, bool, 'advanced', _('Use Open'))
-setting('open_value', 2, int, 'advanced', _('Open')).setRange(1, 10)
-setting('use_threshold', True, bool, 'advanced', _('Use Threshold'))
-setting('threshold_value', 25, int, 'advanced', _('Threshold')).setRange(0, 255)
-setting('use_cr_threshold', True, bool, 'advanced', _('Use Threshold'))
-setting('cr_threshold_value', 140, int, 'advanced', _('Threshold')).setRange(0, 255)
+setting('use_open', True, bool, 'advanced', _('Use Open'), tag='texture')
+setting('open_value', 2, int, 'advanced', _('Open'), tag='texture').setRange(1, 10)
+setting('use_threshold', True, bool, 'advanced', _('Use Threshold'), tag='texture')
+setting('threshold_value', 25, int, 'advanced', _('Threshold'), tag='texture').setRange(0, 255)
+setting('use_cr_threshold', True, bool, 'advanced', _('Use Threshold'), tag='no_texture')
+setting('cr_threshold_value', 140, int, 'advanced', _('Threshold'), tag='no_texture').setRange(0, 255)
 
 setting('view_roi', False, bool, 'advanced', _('View ROI'))
 
@@ -271,10 +275,10 @@ setting('normal_right', ([0.0,0.0,0.0]), numpy.ndarray, 'advanced', _('Normal'))
 setting('rotation_matrix', ([[0.0,1.0,0.0],[0.0,0.0,-1.0],[-1.0,0.0,0.0]]), numpy.ndarray, 'advanced', _('Rotation Matrix'))
 setting('translation_vector', ([5.0,80.0,320.0]), numpy.ndarray, 'advanced', _('Translation Matrix'))
 
-setting('pattern_rows', 11, int, 'advanced', _('Pattern Rows'))
-setting('pattern_columns', 6, int, 'advanced', _('Pattern Columns'))
+setting('pattern_rows', 6, int, 'advanced', _('Pattern Rows'))
+setting('pattern_columns', 11, int, 'advanced', _('Pattern Columns'))
 setting('square_width', 13, int, 'advanced', _('Square width'))
-setting('pattern_distance', 19.8, float, 'advanced', _('Pattern Distance'))
+setting('pattern_distance', 0, float, 'advanced', _('Pattern Distance'))
 setting('extrinsics_step', -5.0, float, 'advanced', _('Extrinsics Step'), False)
 
 setting('laser_coordinates', ([[480.0,480.0],[480.0,480.0]]), numpy.ndarray, 'advanced', _('Laser Coordinates'))

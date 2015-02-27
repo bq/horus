@@ -56,7 +56,9 @@ class ConnectionPage(WizardPage):
         self.connectButton = wx.Button(self.panel, label=_("Connect"))
         self.settingsButton = wx.Button(self.panel, label=_("Edit preferences"))
 
-        self.patternLabel = wx.StaticText(self.panel, label=_("Put the pattern on the platform and press \"Auto check\""))
+
+        self.patternLabel = wx.StaticText(self.panel, label=_("Put the pattern on the platform as shown in the picture and press \"Auto check\""))
+        self.patternLabel.Wrap(400)
         self.imageView = ImageView(self.panel)
         self.imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-right.jpg")))
         self.autoCheckButton = wx.Button(self.panel, label=_("Auto check"))
@@ -207,9 +209,9 @@ class ConnectionPage(WizardPage):
         ret, result = response
 
         if ret:
-            self.resultLabel.SetLabel("All OK. Please press next to continue")
+            self.resultLabel.SetLabel(_("All OK. Please press next to continue"))
         else:
-            self.resultLabel.SetLabel("Error in Auto check. Please try again")
+            self.resultLabel.SetLabel(_("Error in Auto check. Please try again"))
 
         if ret:
             self.skipButton.Disable()
@@ -276,7 +278,7 @@ class ConnectionPage(WizardPage):
 class PreferencesWindow(wx.Dialog):
 
     def __init__(self, parent):
-        super(PreferencesWindow, self).__init__(parent, size=(280,120), style=wx.DEFAULT_FRAME_STYLE^wx.RESIZE_BORDER)
+        super(PreferencesWindow, self).__init__(parent, size=(300,330), style=wx.DEFAULT_FRAME_STYLE^wx.RESIZE_BORDER)
 
         self.parent = parent
         self.driver = Driver.Instance()
@@ -286,34 +288,48 @@ class PreferencesWindow(wx.Dialog):
         self.platformExtrinsics = calibration.PlatformExtrinsics.Instance()
 
         #-- Elements
-        self.text = wx.StaticText(self, label=_('Pattern distance'))
+        self.text = wx.StaticText(self, label=_('Pattern distance (mm)'))
         self.textbox = wx.TextCtrl(self, value = str(profile.getProfileSettingFloat('pattern_distance')))
-
+        self.okButton = wx.Button(self, label=_("OK"))
+        self.text.SetToolTip(wx.ToolTip(_('Distance between the upper edge of the chess row closer to the platform and the platform.')))
 
         luminosity=profile.getProfileSettingObject('luminosity').getType()
         self.luminosityText = wx.StaticText(self, label=_('Luminosity'))
-
+        self.luminosityText.SetToolTip(wx.ToolTip(_('Change the luminosity until coloured lines appear over the chess pattern in the video.')))
         self.luminosityComboBox = wx.ComboBox(self, wx.ID_ANY,
                                             value=profile.getProfileSetting('luminosity'),
                                             choices=[_(luminosity[0]), _(luminosity[1]), _(luminosity[2])],
                                             style=wx.CB_READONLY)
+
+        img = wx.Image(resources.getPathForImage("pattern_distance.jpg"), wx.BITMAP_TYPE_ANY)
+        img = img.Scale(280, 160, wx.IMAGE_QUALITY_HIGH)
+        self.pattern_image=wx.StaticBitmap(self, wx.ID_ANY, wx.BitmapFromImage(img))
+
 
         #-- Layout
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
         hbox.Add(self.luminosityText, 0, wx.ALL|wx.EXPAND, 12)
         hbox.Add(self.luminosityComboBox, -1, wx.ALL|wx.EXPAND, 12)
-        vbox.Add(hbox, 0, wx.ALL|wx.EXPAND,5)
+        vbox.Add(hbox, 0, wx.ALL|wx.EXPAND,-1)
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox1.Add(self.pattern_image, 0, wx.ALL, 10)
+        vbox.Add(hbox1, 0, wx.ALL, -1)
         hbox2 = wx.BoxSizer(wx.HORIZONTAL)
         hbox2.Add(self.text, 0, wx.ALL|wx.EXPAND, 12)
         hbox2.Add(self.textbox, 0, wx.ALL|wx.EXPAND, 12)
-        vbox.Add(hbox2, 0, wx.ALL|wx.EXPAND,5)
+        vbox.Add(hbox2, 0, wx.ALL|wx.EXPAND,-1)
+        hbox3 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox3.Add(self.okButton, 0, wx.ALL|wx.EXPAND, 12)
+        vbox.Add(hbox3, 0, wx.ALIGN_CENTER_HORIZONTAL,-1)
         self.SetSizer(vbox)
+
 
 
         self.textbox.Bind(wx.EVT_TEXT, self.onTextBoxChanged)
         self.luminosityComboBox.Bind(wx.EVT_COMBOBOX, self.onLuminosityComboBoxChanged)
         self.Bind(wx.EVT_CLOSE, self.onClose)
+        self.okButton.Bind(wx.EVT_BUTTON, self.onClose)
 
         self.Centre()
         self.ShowModal()

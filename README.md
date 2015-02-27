@@ -1,30 +1,38 @@
 # Horus
 
-Horus is a general solution for 3D scanning. It provides some graphic user interfaces for connection, configuration, control, calibration and scanning. It is ready to use with Open Source [Ciclop 3D Scanner](http://diwo.bq.com/en/ciclop-released/)
+Horus is a general solution for 3D scanning. It provides graphic user interfaces for connection, configuration, control, calibration and scanning. It is ready to use with Open Source [Ciclop 3D Scanner](http://diwo.bq.com/en/ciclop-released/) [[es](http://diwo.bq.com/ciclop-released/)]
 
 This project has been developed in Python language and it is distributed under GPL v2 license.
 
 More interest links are shown below:
 
-* [Presentation](http://diwo.bq.com/en/presentacion-ciclop-horus/)
-* [Electronics](http://diwo.bq.com/en/zum-scan-released/) 
-* [Firmware](http://diwo.bq.com/en/horus-fw-released/)
+* [Presentation](http://diwo.bq.com/en/presentacion-ciclop-horus/) [[es](http://diwo.bq.com/presentacion-ciclop-horus/)]
+* [Electronics](http://diwo.bq.com/en/zum-scan-released/) [[es](http://diwo.bq.com/zum-scan-released/)]
+* [Firmware](http://diwo.bq.com/en/horus-fw-released/) [[es](http://diwo.bq.com/horus-fw-released/)]
+* [Software](http://diwo.bq.com/horus-released/) [[es](http://diwo.bq.com/horus-released/)]
 
 # Installing
 
 ### GNU/Linux Ubuntu
 
-First of all upgrade your system
+Add our PPA keys
+
+```bash
+sudo add-apt-repository ppa:jesus-arroyo/opencv
+sudo add-apt-repository ppa:jesus-arroyo/horus
+```
+
+Upgrade your system
 
 ```bash
 sudo apt-get update
 sudo apt-get dist-upgrade
 ```
 
-To install Horus execute .deb file. This package installs all dependencies
+Install Horus
 
 ```bash
-sudo dpkg -i horus_0.1-*.deb
+sudo apt-get install horus
 ```
 
 If user has no access to serial port, execute:
@@ -41,7 +49,7 @@ sudo reboot
 
 ### Windows
 
-To install USB Camera drivers follow this instructions: http://support.logitech.com/en_us/product/hd-webcam-c270
+To install USB Camera drivers follow these instructions [Logitech Camera C270 Drivers](http://support.logitech.com/en_us/product/hd-webcam-c270)
 
 Execute .exe file. This package contains all dependencies
 
@@ -69,7 +77,7 @@ sudo apt-get install arduino arduino-core
 ```
 
 #### Stino plugin
-https://github.com/Robot-Will/Stino
+[Stino project on GitHub](https://github.com/Robot-Will/Stino)
 
 #### Git version control
 ```bash
@@ -82,14 +90,19 @@ Following dependencies are included in deb package, but if you want to install i
 
 #### Python
 ```bash
-sudo apt-get install python-wxgtk2.8
-sudo apt-get install python-opengl
-sudo apt-get install python-serial
-sudo apt-get install python-numpy
-sudo apt-get install python-pyglet
-sudo apt-get install python-matplotlib
-sudo apt-get install python-scipy
+sudo apt-get install python-serial python-wxgtk2.8 python-opengl python-pyglet python-numpy python-scipy python-matplotlib
+```
+
+#### OpenCV
+```bash
+sudo add-apt-repository ppa:bqopensource/opencv
+sudo apt-get update
 sudo apt-get install python-opencv
+```
+
+#### AVRDUDE
+```bash
+sudo apt-get install avrdude
 ```
 
 #### FTDI drivers
@@ -102,11 +115,11 @@ sudo apt-get install libftdi1
 sudo apt-get install v4l-utils
 ```
 
-In order to build OpenCV and generate Debian and Windows packages, some extra dependencies are needed
+In order to generate Debian and Windows packages, some extra dependencies are needed
 
 #### Packaging
 ```bash
-sudo apt-get install build-essential cmake pkg-config python-dev libv4l-dev libgtk2.0-dev libdc1394-22-dev libavcodec-dev libavformat-dev libswscale-dev  libjpeg-dev libpng-dev libtiff-dev libjasper-dev p7zip-full curl nsis
+sudo apt-get install build-essential pkg-config python-dev python-stdeb p7zip-full curl nsis
 ```
 
 ## 2. Download source code
@@ -140,12 +153,15 @@ The "package.sh" script generates a final release package. You should not need i
 
 ### GNU/Linux Ubuntu
 ```bash
-sudo ./package.sh debian_amd64 -j3 # or debian_i386
+bash package.sh debian     # Generate deb package
+bash package.sh debian -s  # Generate sources
+bash package.sh debian -i  # Install deb package
+bash package.sh debian -u  # Upload to launchpad
 ```
 
 ### Windows
 ```bash
-sudo ./package.sh win32
+bash package.sh win32  # Generate exe package
 ```
 
 ### GNU/Linux Fedora

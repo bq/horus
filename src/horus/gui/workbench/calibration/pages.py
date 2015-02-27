@@ -321,7 +321,7 @@ class LaserTriangulationMainPage(Page):
 	def __init__(self, parent, afterCancelCallback=None, afterCalibrationCallback=None):
 		Page.__init__(self, parent,
 							title=_("Laser Triangulation"),
-							subTitle=_("Put the pattern on the platform and press Calibrate to continue"),
+							subTitle=_("Put the pattern on the platform as shown in the picture and press Calibrate to continue"),
 							left=_("Cancel"),
 							right=_("Calibrate"),
 							buttonLeftCallback=self.onCancel,
@@ -543,7 +543,7 @@ class SimpleLaserTriangulationMainPage(Page):
 	def __init__(self, parent, afterCancelCallback=None, afterCalibrationCallback=None):
 		Page.__init__(self, parent,
 							title=_("Simple Laser Triangulation"),
-							subTitle=_("Put the pattern on the platform and press Calibrate to continue"),
+							subTitle=_("Put the pattern on the platform as shown in the picture and press Calibrate to continue"),
 							left=_("Cancel"),
 							right=_("Calibrate"),
 							buttonLeftCallback=self.onCancel,
@@ -721,7 +721,7 @@ class PlatformExtrinsicsMainPage(Page):
 	def __init__(self, parent, afterCancelCallback=None, afterCalibrationCallback=None):
 		Page.__init__(self, parent,
 							title=_("Platform Extrinsics"),
-							subTitle=_("Put the pattern on the platform and press Calibrate to continue"),
+							subTitle=_("Put the pattern on the platform as shown in the picture and press Calibrate to continue"),
 							left=_("Cancel"),
 							right=_("Calibrate"),
 							buttonLeftCallback=self.onCancel,

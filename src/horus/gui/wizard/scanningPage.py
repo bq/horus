@@ -123,8 +123,8 @@ class ScanningPage(WizardPage):
 	def onLaserComboBoxChanged(self, event):
 		value = event.GetEventObject().GetValue()
 		profile.putProfileSetting('use_laser', value)
-		useLeft = value == _("Use Left Laser") or value ==_("Use Both Laser")
-		useRight = value == _("Use Right Laser") or value ==_("Use Both Laser")
+		useLeft = value == _("Left") or value ==_("Both")
+		useRight = value == _("Right") or value ==_("Both")
 		if useLeft:
 			self.driver.board.setLeftLaserOn()
 		else:
@@ -150,13 +150,13 @@ class ScanningPage(WizardPage):
 			self.GetParent().parent.workbenchUpdate(False)
 			self.videoView.play()
 			value = profile.getProfileSetting('use_laser')
-			if value ==_("Use Left Laser"):
+			if value ==_("Left"):
 				self.driver.board.setLeftLaserOn()
 				self.driver.board.setRightLaserOff()
-			elif value ==_("Use Right Laser"):
+			elif value ==_("Right"):
 				self.driver.board.setLeftLaserOff()
 				self.driver.board.setRightLaserOn()
-			elif value ==_("Use Both Laser"):
+			elif value ==_("Both"):
 				self.driver.board.setLeftLaserOn()
 				self.driver.board.setRightLaserOn()
 		else:

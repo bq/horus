@@ -151,8 +151,8 @@ class ExpandablePanel(wx.Panel):
 		#-- Undo
 		self.undoObjects = []
 
-	def createSection(self, name, title=None):
-		section = SectionPanel(self.content, title)
+	def createSection(self, name, title=None, tag=None):
+		section = SectionPanel(self.content, title, tag=tag)
 		if self.hasUndo:
 			section.setUndoCallbacks(self.appendUndo, self.releaseUndo)
 		self.sections.update({name : section})
@@ -208,8 +208,9 @@ class ExpandablePanel(wx.Panel):
 		return len(self.undoObjects) > 0
 
 class SectionPanel(wx.Panel):
-	def __init__(self, parent, title=None):
+	def __init__(self, parent, title=None, tag=None):
 		wx.Panel.__init__(self, parent)
+		self.tag = tag
 
 		#-- Elements
 		if title is not None:
@@ -226,24 +227,41 @@ class SectionPanel(wx.Panel):
 		self.SetSizer(self.vbox)
 		self.Layout()
 
-	def addItem(self, _type, _name, _callback, dropdown=None):
-		if dropdown== None:
+	def addItem(self, _type, _name, _callback, dropdown=None, tooltip=None):
+		if dropdown == None:
 			item = _type(self, _name, _callback)
 		else:
 			item = _type(self, _name, _callback,dropdown)
-
 		item.setUndoCallbacks(self.appendUndoCallback, self.releaseUndoCallback)
-		self.items.update({_name : item})
+		if tooltip == None:
+			self.items.update({_name : item})
+		else:
+			self.items.update({_name : (item, tooltip)})
 		self.vbox.Add(item, 0, wx.ALL|wx.EXPAND, 1)
 		self.Layout()
+		return self
 
 	def resetProfile(self):
 		for item in self.items.values():
-			item.resetProfile()
+			if isinstance(item, tuple):
+				item[0].resetProfile()
 
 	def updateProfile(self):
+		scan_type=profile.getProfileSetting('scan_type')
+		if self.tag != None:
+			if scan_type == self.tag:
+				self.Show()
+			else:
+				self.Hide()
+		else:
+			self.Show()
+
 		for item in self.items.values():
-			item.updateProfile()
+			if isinstance(item, tuple):
+				item[0].updateProfile()
+				item[0].label.SetToolTip(wx.ToolTip(item[1]));
+			else:
+				item.updateProfile()
 
 	def setUndoCallbacks(self, appendUndoCallback=None, releaseUndoCallback=None):
 		self.appendUndoCallback = appendUndoCallback
@@ -275,7 +293,14 @@ class SectionItem(wx.Panel):
 		if profile.getPreferenceBool('basic_mode'):
 			return self.setting.getCategory() is 'basic'
 		else:
-			return self.setting.getCategory() is 'basic' or self.setting.getCategory() is 'advanced'
+			scan_type=profile.getProfileSetting('scan_type')
+			if self.setting.getTag() != None:
+				if scan_type == _("Without Texture"):
+					return self.setting.getTag() == 'no_texture'
+				elif scan_type == _("With Texture"):
+					return self.setting.getTag() == 'texture'
+			else:
+				return True
 
 	def update(self, value):
 		if self.isVisible():
@@ -416,7 +441,6 @@ class ComboBox(SectionItem):
 		hbox.Add(self.control, 1, wx.TOP|wx.RIGHT|wx.EXPAND, 12)
 		self.SetSizer(hbox)
 		self.Layout()
-
 		#-- Events
 		self.control.Bind(wx.EVT_COMBOBOX, self.onComboBoxChanged)
 
@@ -469,6 +493,7 @@ class CheckBox(SectionItem):
 		if hasattr(self,'control'):
 			value = profile.getProfileSettingBool(self.name)
 			self.update(value)
+
 
 class RadioButton(SectionItem):
 	def __init__(self, parent, name, engineCallback=None):
@@ -538,6 +563,7 @@ class TextBox(SectionItem):
 		if hasattr(self,'control'):
 			value = profile.getProfileSetting(self.name)
 			self.update(value)
+
 
 
 ##TODO: Create TextBoxArray

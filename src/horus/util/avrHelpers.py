@@ -50,11 +50,8 @@ class AvrDude(SerialDevice):
 
         if os.name == 'nt':
         	self.avrdude = path(resources.getPathForToolsWindows("avrdude.exe")).abspath()
-        elif platform.architecture()[0] == '64bit':
-            self.avrdude = path(resources.getPathForToolsLinux("avrdude-x64")).abspath()
         else:
-            self.avrdude = path(resources.getPathForToolsLinux("avrdude")).abspath()
-        #print "avrdude path=%s" % self.avrdude
+            self.avrdude = 'avrdude'
         
         if self.avrdude is None:
             raise FirmwareError('avrdude not installed')

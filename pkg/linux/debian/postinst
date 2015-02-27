@@ -1,0 +1,20 @@
+#!/bin/bash
+ 
+set -e
+ 
+case "$1" in
+   configure)
+      rm -rf ~/.horus/
+   ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
+    exit 0
+  ;;
+
+   *)
+      echo "postinst called with unknown argument \`\$1'" >&2
+      exit 1
+   ;;
+esac
+
+exit 0

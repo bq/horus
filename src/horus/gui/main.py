@@ -119,9 +119,9 @@ class MainWindow(wx.Frame):
 
         #-- Menu Edit
         self.menuEdit = wx.Menu()
-        self.menuBasicMode = self.menuEdit.AppendRadioItem(wx.NewId(), _("Basic Mode"))
-        self.menuAdvancedMode = self.menuEdit.AppendRadioItem(wx.NewId(), _("Advanced Mode"))
-        self.menuEdit.AppendSeparator()
+        # self.menuBasicMode = self.menuEdit.AppendRadioItem(wx.NewId(), _("Basic Mode"))
+        # self.menuAdvancedMode = self.menuEdit.AppendRadioItem(wx.NewId(), _("Advanced Mode"))
+        # self.menuEdit.AppendSeparator()
         self.menuPreferences = self.menuEdit.Append(wx.NewId(), _("Preferences"))
         self.menuBar.Append(self.menuEdit, _("Edit"))
 
@@ -177,8 +177,8 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onResetProfile, self.menuResetProfile)
         self.Bind(wx.EVT_MENU, self.onExit, menuExit)
 
-        self.Bind(wx.EVT_MENU, self.onModeChanged, self.menuBasicMode)
-        self.Bind(wx.EVT_MENU, self.onModeChanged, self.menuAdvancedMode)
+        # self.Bind(wx.EVT_MENU, self.onModeChanged, self.menuBasicMode)
+        # self.Bind(wx.EVT_MENU, self.onModeChanged, self.menuAdvancedMode)
         self.Bind(wx.EVT_MENU, self.onPreferences, self.menuPreferences)
 
         self.Bind(wx.EVT_MENU, self.onControlPanelClicked, self.menuControlPanel)
@@ -318,7 +318,7 @@ class MainWindow(wx.Frame):
         profile.putPreference('last_files', self.lastFiles)
 
     def onModeChanged(self, event):
-        profile.putPreference('basic_mode', self.menuBasicMode.IsChecked())
+        # profile.putPreference('basic_mode', self.menuBasicMode.IsChecked())
         self.controlWorkbench.updateProfileToAllControls()
         self.calibrationWorkbench.updateProfileToAllControls()
         self.scanningWorkbench.updateProfileToAllControls()
@@ -400,7 +400,10 @@ class MainWindow(wx.Frame):
         """ """
         currentWorkbench = profile.getPreference('workbench')
         for key in self.workbenchList:
-            if self.workbenchList[key] == str(event.GetEventObject().GetValue()):
+            # print self.workbenchList[key]
+            # print event.GetEventObject().GetValue().encode("utf-8")
+
+            if self.workbenchList[key].encode("utf-8") == event.GetEventObject().GetValue().encode("utf-8"):
                 if key is not None:
                     profile.putPreference('workbench', key)
                     if key != currentWorkbench:
@@ -461,10 +464,10 @@ Suite 330, Boston, MA  02111-1307  USA""")
 
     def updateProfileToAllControls(self):
         """ """
-        if profile.getPreferenceBool('basic_mode'):
-            self.menuBasicMode.Check(True)
-        else:
-            self.menuAdvancedMode.Check(True)
+        # if profile.getPreferenceBool('basic_mode'):
+        #     self.menuBasicMode.Check(True)
+        # else:
+        #     self.menuAdvancedMode.Check(True)
 
         if profile.getPreferenceBool('view_control_panel'):
             self.controlWorkbench.scrollPanel.Show()
@@ -547,8 +550,8 @@ Suite 330, Boston, MA  02111-1307  USA""")
             resolution = profile.getProfileSetting('resolution_scanning')
             self.pcg.setResolution(int(resolution.split('x')[1]), int(resolution.split('x')[0]))
             useLaser = profile.getProfileSetting('use_laser')
-            self.pcg.setUseLaser(useLaser==_("Use Left Laser") or useLaser==_("Use Both Laser"),
-                                 useLaser==_("Use Right Laser") or useLaser==_("Use Both Laser"))
+            self.pcg.setUseLaser(useLaser==_("Left") or useLaser==_("Both"),
+                                 useLaser==_("Right") or useLaser==_("Both"))
             self.pcg.setCameraIntrinsics(profile.getProfileSettingNumpy('camera_matrix'),
                                          profile.getProfileSettingNumpy('distortion_vector'))
             self.pcg.setLaserTriangulation(profile.getProfileSettingNumpy('distance_left'),
@@ -637,7 +640,7 @@ Suite 330, Boston, MA  02111-1307  USA""")
             if wb[key] is not None:
                 if key == currentWorkbench:
                     wb[key].updateProfileToAllControls()
-                    wb[key].combo.SetValue(str(self.workbenchList[key]))
+                    wb[key].combo.SetValue(str(self.workbenchList[key].encode("utf-8")))
 
         if layout:
             for key in wb:

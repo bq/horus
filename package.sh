@@ -10,18 +10,13 @@
 ##Select the build target
 BUILD_TARGET=${1:-none}
 #BUILD_TARGET=win32
-#BUILD_TARGET=debian_i386
-#BUILD_TARGET=debian_amd64
+#BUILD_TARGET=debian
 
-MAKE_ARGS=${2}
+EXTRA_ARGS=${2}
 
-##Do we need to create the final archive
-ARCHIVE_FOR_DISTRIBUTION=1
 ##Which version name are we appending to the final archive
-export BUILD_NAME=0.1
-TARGET_DIR=Horus-${BUILD_NAME}-${BUILD_TARGET}
-
-BUILD_OPENCV=1
+VERSION=`head -1 pkg/linux/debian/changelog | grep -o '[0-9.]*' | head -1`
+TARGET_DIR=Horus-${VERSION}-${BUILD_TARGET}
 
 ##Which versions of external programs to use
 WIN_PORTABLE_PY_VERSION=2.7.2.1 #TODO: 2.7.6.1
@@ -34,7 +29,7 @@ function checkTool
 {
 	if [ -z `which $1` ]; then
 		echo "The $1 command must be somewhere in your \$PATH."
-		echo "Fix your \$PATH or install $2"
+		echo "Fix your \$PATH or install it"
 		exit 1
 	fi
 }
@@ -70,8 +65,7 @@ function extract
 if [ "$BUILD_TARGET" = "none" ]; then
 	echo "You need to specify a build target with:"
 	echo "$0 win32"
-	echo "$0 debian_i368"
-	echo "$0 debian_amd64"
+	echo "$0 debian"
 	exit 0
 fi
 
@@ -87,92 +81,78 @@ if [ $BUILD_TARGET = "win32" ]; then
 	checkTool 7z "7zip: http://www.7-zip.org/"
 fi
 
+# Clean sources
+rm -rf deb_dist
+rm -rf win_dist
+
 #############################
-# OpenCV: make and install
+# Debian packaging
 #############################
 
-if (( ${BUILD_OPENCV} )); then
-	if ! [ "$BUILD_TARGET" = "win32" ]; then
-		mkdir -p LIN
-		cd LIN
-		git clone https://github.com/bq/opencv.git
-		cd opencv; git pull
-		rm -rf release
-		mkdir -p release
-		cd release
-		if [ "$BUILD_TARGET" = "debian_i386" ]; then
-			cmake -G "Unix Makefiles" -D CMAKE_OSX_ARCHITECTURES=i386 -D CMAKE_C_FLAGS=-m32 -D CMAKE_CXX_FLAGS=-m32 -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_TBB=ON -D BUILD_NEW_PYTHON_SUPPORT=ON \
-				  -D WITH_V4L=ON -D WITH_FFMPEG=OFF -D WITH_OPENGL=OFF -D BUILD_opencv_gpu=OFF -D BUILD_opencv_gpu=OFF -D BUILD_opencv_ocl=OFF -D BUILD_opencv_nonfree=OFF \
-				  -D BUILD_opencv_stitching=OFF -D BUILD_opencv_superres=OFF -D BUILD_opencv_ts=OFF -D BUILD_opencv_videostab=OFF -D BUILD_opencv_java=OFF ..
-		elif [ "$BUILD_TARGET" = "debian_amd64" ]; then
-			cmake -G "Unix Makefiles" -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_TBB=ON -D BUILD_NEW_PYTHON_SUPPORT=ON \
-				  -D WITH_V4L=ON -D WITH_FFMPEG=OFF -D WITH_OPENGL=OFF -D BUILD_opencv_gpu=OFF -D BUILD_opencv_gpu=OFF -D BUILD_opencv_ocl=OFF -D BUILD_opencv_nonfree=OFF \
-				  -D BUILD_opencv_stitching=OFF -D BUILD_opencv_superres=OFF -D BUILD_opencv_ts=OFF -D BUILD_opencv_videostab=OFF -D BUILD_opencv_java=OFF ..
+if [ $BUILD_TARGET = "debian" ]; then
+	# Generate Debian source package
+	python setup.py --command-packages=stdeb.command sdist_dsc \
+	#--debian-version 1 \
+	#--suite 'trusty' \
+	#--section 'misc' \
+	#--package 'horus' \
+	#--depends 'python,
+	#           python-serial,
+	#           python-wxgtk2.8,
+	#           python-opengl,
+	#           python-pyglet,
+	#           python-numpy,
+	#           python-scipy,
+	#           python-matplotlib,
+	#           python-opencv,
+	#           avrdude,
+	#           libftdi1,
+	#           v4l-utils' \
+	#bdist_deb # Used to generate deb files
+
+	# Copy postinst and postrm files
+	cp -a pkg/linux/debian/postinst deb_dist/horus-${VERSION}/debian/postinst
+	cp -a pkg/linux/debian/postrm deb_dist/horus-${VERSION}/debian/postrm
+
+	# Modify changelog and control files
+	cp -a pkg/linux/debian/changelog deb_dist/horus-${VERSION}/debian/changelog
+	cp -a pkg/linux/debian/control deb_dist/horus-${VERSION}/debian/control
+
+	cd deb_dist/horus-${VERSION}
+	if [ $EXTRA_ARGS ]; then
+		if [ $EXTRA_ARGS = "-s" ]; then
+			# Build and sign Debian sources
+			debuild -S -sa
+		elif [ $EXTRA_ARGS = "-i" ]; then
+			# Install Debian package
+			dpkg-buildpackage
+			sudo dpkg -i ../horus*.deb
+			sudo apt-get -f install
+		elif [ $EXTRA_ARGS = "-u" ]; then
+			# Upload to launchpad
+			debuild -S -sa
+			PPA=ppa:jesus-arroyo/horus
+			RELEASES="trusty utopic"
+			ORIG_RELEASE=`head -1 pkg/linux/debian/changelog | sed 's/.*) \(.*\);.*/\1/'`
+			for RELEASE in $RELEASES ;
+			do
+			  cp debian/changelog debian/changelog.backup
+			  sed -i "s/${ORIG_RELEASE}/${RELEASE}/;s/bq1/bq1~${RELEASE}1/" debian/changelog
+			  debuild -S -sa
+			  dput -f ${PPA} ../horus_${VERSION}-bq1~${RELEASE}1_source.changes
+			  mv debian/changelog.backup debian/changelog
+			done
 		fi
-		make "$MAKE_ARGS"
-		cd ../../..
-		rm -rf pkg/linux/${BUILD_TARGET}/usr/local/lib
-		mkdir -p  pkg/linux/${BUILD_TARGET}/usr/local/lib/python2.7/dist-packages/
-		echo "from cv2.cv import *" > pkg/linux/${BUILD_TARGET}/usr/local/lib/python2.7/dist-packages/cv.py
-		cp -a LIN/opencv/release/lib/cv2.so  pkg/linux/${BUILD_TARGET}/usr/local/lib/python2.7/dist-packages/cv2.so
-		cp -a LIN/opencv/release/lib/*.2.4.9 pkg/linux/${BUILD_TARGET}/usr/local/lib/
-		cp -a LIN/opencv/release/lib/*.2.4 pkg/linux/${BUILD_TARGET}/usr/local/lib/
-		cp -a LIN/opencv/release/lib/*.so pkg/linux/${BUILD_TARGET}/usr/local/lib/
-		rm -rf pkg/linux/${BUILD_TARGET}/usr/local/lib/cv2.so
-		rm -rf LIN/opencv/release
-		#rm -rf LIN
-	fi
+		else
+			# Build and sign Debian package
+			dpkg-buildpackage
+		fi
+
+	# Clean directory
+	cd ../..
+	rm -rf "Horus.egg-info"
 fi
 
-#############################
-# Debian 32bit .deb
-#############################
-
-if [ "$BUILD_TARGET" = "debian_i386" ]; then
-	rm -rf pkg/linux/${BUILD_TARGET}/usr/share/horus
-	mkdir -p  pkg/linux/${BUILD_TARGET}/usr/share/horus
-	cp -a doc  pkg/linux/${BUILD_TARGET}/usr/share/horus/
-	cp -a res  pkg/linux/${BUILD_TARGET}/usr/share/horus/
-	cp -a src  pkg/linux/${BUILD_TARGET}/usr/share/horus/
-	echo $BUILD_NAME >  pkg/linux/${BUILD_TARGET}/usr/share/horus/version
-	sudo chown root:root  pkg/linux/${BUILD_TARGET} -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/bin -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/local/lib/*.so -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/local/lib/*.2.4 -R
-	sudo chmod 644  pkg/linux/${BUILD_TARGET}/usr/local/lib/*.2.4.9 -R
-	sudo chmod 644  pkg/linux/${BUILD_TARGET}/usr/local/lib/python2.7/dist-packages/*
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/share -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/DEBIAN -R
-	cd  pkg/linux
-	dpkg-deb --build ${BUILD_TARGET} $(dirname ${TARGET_DIR})/horus_${BUILD_NAME}-${BUILD_TARGET}.deb
-	sudo chown `id -un`:`id -gn` ${BUILD_TARGET} -R
-	exit
-fi
-
-#############################
-# Debian 64bit .deb
-#############################
-
-if [ "$BUILD_TARGET" = "debian_amd64" ]; then
-	rm -rf  pkg/linux/${BUILD_TARGET}/usr/share/horus
-	mkdir -p  pkg/linux/${BUILD_TARGET}/usr/share/horus
-	cp -a doc  pkg/linux/${BUILD_TARGET}/usr/share/horus/
-	cp -a res  pkg/linux/${BUILD_TARGET}/usr/share/horus/
-	cp -a src  pkg/linux/${BUILD_TARGET}/usr/share/horus/
-	echo $BUILD_NAME >  pkg/linux/${BUILD_TARGET}/usr/share/horus/version
-	sudo chown root:root  pkg/linux/${BUILD_TARGET} -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/bin -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/local/lib/*.so -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/local/lib/*.2.4 -R
-	sudo chmod 644  pkg/linux/${BUILD_TARGET}/usr/local/lib/*.2.4.9 -R
-	sudo chmod 644  pkg/linux/${BUILD_TARGET}/usr/local/lib/python2.7/dist-packages/*
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/usr/share -R
-	sudo chmod 755  pkg/linux/${BUILD_TARGET}/DEBIAN -R
-	cd  pkg/linux
-	dpkg-deb --build ${BUILD_TARGET} $(dirname ${TARGET_DIR})/horus_${BUILD_NAME}-${BUILD_TARGET}.deb
-	sudo chown `id -un`:`id -gn` ${BUILD_TARGET} -R
-	exit
-fi
 
 #############################
 # Rest
@@ -183,13 +163,12 @@ fi
 #############################
 
 if [ $BUILD_TARGET = "win32" ]; then
-	mkdir -p WIN
-	cd WIN
-	#Get portable python for windows and extract it. (Linux and Mac need to install python themselfs)
+	mkdir -p win_dist
+	cd win_dist
+	# Get portable python for windows and extract it. (Linux and Mac need to install python themselfs)
 	downloadURL http://ftp.nluug.nl/languages/python/portablepython/v2.7/PortablePython_${WIN_PORTABLE_PY_VERSION}.exe
-	#downloadURL https://www.python.org/ftp/python/2.7.8/python-2.7.8.msi
-	#downloadURL http://sourceforge.net/projects/wxpython/files/wxPython/3.0.0.0/wxPython3.0-win32-3.0.0.0-py27.exe
 	downloadURL http://sourceforge.net/projects/pyserial/files/pyserial/2.7/pyserial-2.7.win32.exe
+	downloadURL http://sourceforge.net/projects/comtypes/files/comtypes/0.6.2/comtypes-0.6.2.win32.exe
 	downloadURL http://sourceforge.net/projects/pyopengl/files/PyOpenGL/3.0.1/PyOpenGL-3.0.1.win32.exe
 	downloadURL https://pypi.python.org/packages/any/p/pyparsing/pyparsing-2.0.1.win32-py2.7.exe
 	downloadURL http://sourceforge.net/projects/numpy/files/NumPy/1.8.1/numpy-1.8.1-win32-superpack-python2.7.exe
@@ -197,7 +176,6 @@ if [ $BUILD_TARGET = "win32" ]; then
 	downloadURL https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.3.0/matplotlib-1.3.0.win32-py2.7.exe
 	downloadURL http://sourceforge.net/projects/scipy/files/scipy/0.14.0/scipy-0.14.0-win32-superpack-python2.7.exe
 	downloadURL http://videocapture.sourceforge.net/VideoCapture-0.9-5.zip
-	downloadURL http://sourceforge.net/projects/comtypes/files/comtypes/0.6.2/comtypes-0.6.2.win32.exe
 	mkdir -p pyglet; cd pyglet;
 	downloadURL http://pyglet.googlecode.com/files/pyglet-1.1.4.msi; cd .. 
 fi
@@ -205,17 +183,17 @@ fi
 #############################
 # Build the packages
 #############################
-rm -rf ${TARGET_DIR}
-mkdir -p ${TARGET_DIR}
 
-rm -f log.txt
 if [ $BUILD_TARGET = "win32" ]; then
-	#For windows extract portable python to include it.
+	rm -rf ${TARGET_DIR}
+	mkdir -p ${TARGET_DIR}
+
+	rm -f log.txt
+
+	# For windows extract portable python to include it.
 	extract PortablePython_${WIN_PORTABLE_PY_VERSION}.exe \$_OUTDIR/App
 	extract PortablePython_${WIN_PORTABLE_PY_VERSION}.exe \$_OUTDIR/Lib/site-packages
 	extract PortablePython_${WIN_PORTABLE_PY_VERSION}.exe \$_OUTDIR/dateutil
-	#extract python-2.7.8.msi 
-	#extract wxPython3.0-win32-3.0.0.0-py27.exe
 	extract pyserial-2.7.win32.exe PURELIB
 	extract comtypes-0.6.2.win32.exe PURELIB
 	extract PyOpenGL-3.0.1.win32.exe PURELIB
@@ -254,7 +232,7 @@ if [ $BUILD_TARGET = "win32" ]; then
 	rm -rf Win32
 	rm -rf pyglet
 
-	#Clean up portable python a bit, to keep the package size down.
+	# Clean up portable python a bit, to keep the package size down.
 	rm -rf ${TARGET_DIR}/python/PyScripter.*
 	rm -rf ${TARGET_DIR}/python/Doc
 	rm -rf ${TARGET_DIR}/python/locale
@@ -264,34 +242,23 @@ if [ $BUILD_TARGET = "win32" ]; then
 	rm -rf ${TARGET_DIR}/python/Lib/site-packages/wx-2.8-msw-unicode/wx/locale
 	#Remove the gle files because they require MSVCR71.dll, which is not included. We also don't need gle, so it's safe to remove it.
 	rm -rf ${TARGET_DIR}/python/Lib/OpenGL/DLLS/gle*
-fi
 
-#add Horus
-mkdir -p ${TARGET_DIR}/doc ${TARGET_DIR}/res ${TARGET_DIR}/src
-cp -a ../doc/* ${TARGET_DIR}/doc
-cp -a ../res/* ${TARGET_DIR}/res
-cp -a ../src/* ${TARGET_DIR}/src
-#Add horus version file
-echo $BUILD_NAME > ${TARGET_DIR}/version
+	# Add Horus
+	mkdir -p ${TARGET_DIR}/doc ${TARGET_DIR}/res ${TARGET_DIR}/src
+	cp -a ../doc/* ${TARGET_DIR}/doc
+	cp -a ../res/* ${TARGET_DIR}/res
+	cp -a ../src/* ${TARGET_DIR}/src
+	#Add horus version file
+	echo $VERSION > ${TARGET_DIR}/version
 
-#add script files
-if [ $BUILD_TARGET = "win32" ]; then
+	# Add script files
 	cp -a ../pkg/${BUILD_TARGET}/*.bat $TARGET_DIR/
-else
-	cp -a ../pkg/${BUILD_TARGET}/*.sh $TARGET_DIR/
-fi
 
-#package the result
-if (( ${ARCHIVE_FOR_DISTRIBUTION} )); then
-	if [ $BUILD_TARGET = "win32" ]; then
-		rm -rf ../pkg/win32/dist
-		ln -sf `pwd`/${TARGET_DIR} ../pkg/win32/dist
-		makensis -DVERSION=${BUILD_NAME} ../pkg/win32/installer.nsi
-		if [ $? != 0 ]; then echo "Failed to package NSIS installer"; exit 1; fi
-		rm -rf ../pkg/win32/dist
-		#cd ../
-		#rm -rf WIN
-	fi
-else
-	echo "Installed into ${TARGET_DIR}"
+	# Package the result
+	rm -rf ../pkg/win32/dist
+	ln -sf `pwd`/${TARGET_DIR} ../pkg/win32/dist
+	makensis -DVERSION=${VERSION} ../pkg/win32/installer.nsi
+	if [ $? != 0 ]; then echo "Failed to package NSIS installer"; exit 1; fi
+	mv ../pkg/win32/Horus_${VERSION}.exe .
+	rm -rf ../pkg/win32/dist
 fi
