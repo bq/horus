@@ -76,8 +76,8 @@ class PreferencesDialog(wx.Dialog):
 		self.boardsCombo.Bind(wx.EVT_COMBOBOX, self.onBoardsComboChanged)
 		self.uploadFirmwareButton.Bind(wx.EVT_BUTTON, self.onUploadFirmware)
 		self.languageCombo.Bind(wx.EVT_COMBOBOX, self.onLanguageComboChanged)
-		self.okButton.Bind(wx.EVT_BUTTON, lambda e: self.Destroy())
-		self.Bind(wx.EVT_CLOSE, lambda e: self.Destroy())
+		self.okButton.Bind(wx.EVT_BUTTON, self.onClose)
+		
 
 		#-- Fill data
 		currentSerial = profile.getProfileSetting('serial_name')
@@ -149,6 +149,11 @@ class PreferencesDialog(wx.Dialog):
 		self.Centre()
 
 		self.Fit()
+
+	def onClose(self, event):
+		self.EndModal(wx.ID_OK)
+		self.Destroy()
+	
 
 	def onSerialNameTextChanged(self, event):
 		if len(self.serialNameCombo.GetValue()):
