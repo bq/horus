@@ -672,7 +672,7 @@ Suite 330, Boston, MA  02111-1307  USA""")
             except:
                 return baselist
         else:
-            for device in ['/dev/ttyACM*', '/dev/ttyUSB*', "/dev/tty.usb*", "/dev/cu.*", "/dev/rfcomm*"]:
+            for device in ['/dev/ttyACM*', '/dev/ttyUSB*', "/dev/tty.usb*", "/dev/cu.*", "/dev/rfcomm*",'/dev/tty.wchusb*']:
                 baselist = baselist + glob.glob(device)
         return baselist
 
