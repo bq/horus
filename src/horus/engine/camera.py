@@ -143,25 +143,29 @@ class Camera:
 		otherwise it will be displayed as the camera sees it """
 		if self.isConnected:
 			self.reading = True
-			#if flush:
-			#	for i in range(0, flushValue):
-			#		self.capture.read() #grab()
+			if flush:
+				for i in range(0, flushValue):
+					self.capture.get_frame() #grab()
 
 			ret = self.capture.get_frame();
 			if (ret is not None):
 				image=ret.img
+				size=self.capture.get_size()
+				#image=cv2.resize(image, size) 
 				
 			self.reading = False
+			
 			if ret:
+				
 				if self.useDistortion and \
 				   self.cameraMatrix is not None and \
 				   self.distortionVector is not None and \
 				   self.distCameraMatrix is not None:
-					mapx, mapy = cv2.initUndistortRectifyMap(self.cameraMatrix, self.distortionVector,
-															 R=None, newCameraMatrix=self.distCameraMatrix,
-															 size=(self.width, self.height), m1type=5)
+					mapx, mapy = cv2.initUndistortRectifyMap(self.cameraMatrix, self.distortionVector, R=None, newCameraMatrix=self.distCameraMatrix, size=(self.width, self.height), m1type=5)
 					image = cv2.remap(image, mapx, mapy, cv2.INTER_LINEAR)
+				
 				image = cv2.transpose(image)
+					
 				if not mirror:
 					image = cv2.flip(image, 1)
 				self._success()
@@ -254,8 +258,10 @@ class Camera:
 			#self.height = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
 
 	def setResolution(self, width, height):
-		self._setWidth(width)
-		self._setHeight(height)
+		#self._setWidth(width)
+		#self._setHeight(height)
+		if self.isConnected:
+			self.capture.set_size((width,height))
 		self._updateResolution()
 
 	def setUseDistortion(self, value):

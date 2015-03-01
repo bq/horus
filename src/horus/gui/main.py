@@ -35,6 +35,8 @@ import struct
 import platform
 import wx._core
 
+from ..hardware import uvc_capture as uvc
+
 from horus.util import profile, resources, meshLoader
 
 from horus.gui.workbench.control.main import ControlWorkbench
@@ -46,6 +48,8 @@ from horus.gui.wizard.main import *
 
 from horus.engine.driver import Driver
 from horus.engine import scan, calibration
+
+
 
 VERSION = "0.1"
 
@@ -675,7 +679,7 @@ Suite 330, Boston, MA  02111-1307  USA""")
             except:
                 return baselist
         else:
-            for device in ['/dev/ttyACM*', '/dev/ttyUSB*', "/dev/tty.usb*", "/dev/cu.*", "/dev/rfcomm*",'/dev/tty.wchusb*']:
+            for device in ['/dev/ttyACM*', '/dev/ttyUSB*',  "/dev/tty.usb*", "/dev/tty.wchusb*", "/dev/cu.*", "/dev/rfcomm*"]:
                 baselist = baselist + glob.glob(device)
         return baselist
 
@@ -686,6 +690,7 @@ Suite 330, Boston, MA  02111-1307  USA""")
     def videoList(self):
         baselist=[]
         caps=[]
+
         if os.name=="nt":
             i=0
             while True:
@@ -700,6 +705,10 @@ Suite 330, Boston, MA  02111-1307  USA""")
 
                 baselist.append(str(i))
                 i+=1
+        elif os.sys.platform=="darwin":
+            
+            for device in uvc.Camera_List():
+                baselist.append(str(device.src_id))
         else:
             for device in ['/dev/video*']:
                 baselist = baselist + glob.glob(device)

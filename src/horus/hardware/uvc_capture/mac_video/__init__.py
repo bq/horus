@@ -220,7 +220,7 @@ class Camera_Capture(object):
         self.capture.set(4, height)
 
     def get_size(self):
-        return self.capture.get(3), self.capture.get(4)
+        return int(self.capture.get(3)), int(self.capture.get(4))
 
     def set_fps(self,fps):
         self.capture.set(5,fps)

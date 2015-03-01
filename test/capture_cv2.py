@@ -1,4 +1,4 @@
-import cv
+
 import cv2
 
 import hardware.uvc_capture as uvc
@@ -9,8 +9,8 @@ camera_index = 0
 
 
 
-cap= uvc.autoCreateCapture(0);
-cap.controls['UVCC_REQ_EXPOSURE_AUTOMODE'].set_val(1);
+cap= uvc.autoCreateCapture(0,(1280,960));
+#cap.controls['UVCC_REQ_EXPOSURE_AUTOMODE'].set_val(8);
 #cap.controls['UVCC_REQ_EXPOSURE_AUTOPRIO'].set_val(0);
 #capture = cv.CaptureFromCAM(camera_index)
 
@@ -19,29 +19,39 @@ def repeat():
     global camera_index
     frame = cap.get_frame()
     
-    if frame.img is None:
+    image=frame.img
+    
+    #image=cv.resize(image,(1280,960))
+    
+    if image is None:
         logger.error("Could not retrieve image from capture")
         cap.close()
         return
+
+    image=cv2.resize(image, cap.get_size())
+    image = cv2.transpose(image)
+    image = cv2.flip(image, 1)
+
+    cv2.imshow("w1", image)
+        
+    ##print frame.img
+    #
     
-    #print frame.img
-    
-    cv2.imshow("w1", frame.img)
     #cv.ShowImage("w1", frame)
-    c = cv2.waitKey(10)
-    
-    if (c!=-1):
-        print c
-        if (chr(c)=='+'):
-            cap.controls['UVCC_REQ_EXPOSURE_ABS'].set_val(1000)
-            
-        if (chr(c)=='-'):
-            cap.controls['UVCC_REQ_EXPOSURE_ABS'].set_val(50)
-        
-        print ', '.join("%s: %s" % item for item in vars(cap.controls['UVCC_REQ_EXPOSURE_ABS']).items())
-        
-        
-        print "Exposure {0}".format(cap.controls['UVCC_REQ_EXPOSURE_ABS'].get_val())
+    #c = cv2.waitKey(10)
+    #
+    #if (c!=-1):
+    #    print c
+    #    if (chr(c)=='+'):
+    #        cap.controls['UVCC_REQ_EXPOSURE_ABS'].set_val(1000)
+    #        
+    #    if (chr(c)=='-'):
+    #        cap.controls['UVCC_REQ_EXPOSURE_ABS'].set_val(50)
+    #    
+    #    print ', '.join("%s: %s" % item for item in vars(cap.controls['UVCC_REQ_EXPOSURE_ABS']).items())
+    #    
+    #    
+    #    print "Exposure {0}".format(cap.controls['UVCC_REQ_EXPOSURE_ABS'].get_val())
     
     #if(c=="n"): #in "n" key is pressed while the popup window is in focus
     #    camera_index += 1 #try the next camera index
