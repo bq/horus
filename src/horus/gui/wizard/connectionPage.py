@@ -360,6 +360,7 @@ class PreferencesWindow(wx.Dialog):
                                                      profile.getProfileSettingFloat('pattern_distance'))
 
     def onClose(self, event):
+        self.EndModal(wx.ID_OK)
         self.Destroy()
 
     def onLuminosityComboBoxChanged(self, event):
