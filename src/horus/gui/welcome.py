@@ -69,6 +69,7 @@ class WelcomeWindow(wx.Dialog):
         profile.putPreference('show_welcome', not event.Checked())
 
     def onClose(self, event):
+        self.EndModal(wx.ID_OK)
         self.Destroy()
 
 
