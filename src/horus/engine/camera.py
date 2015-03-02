@@ -95,39 +95,59 @@ class Camera:
 	def connect(self):
 		print ">>> Connecting camera {0}".format(self.cameraId)
 		self.isConnected = False
-		if self.capture is not None:
-			self.capture.close()
 		
-		self.capture = uvc.autoCreateCapture(self.cameraId,(self.width,self.height))
-		
-		
-		
-		
-		time.sleep(0.2)
-		
-		if self.capture is not None:
-			print ">>> Done"
-			self.isConnected = True
-			self.checkVideo()
-			self.checkCamera()
+		if platform.system() == 'Darwin':
+			if self.capture is not None:
+				self.capture.close()
+			self.capture = uvc.autoCreateCapture(self.cameraId,(self.width,self.height))
+			if self.capture is not None:
+				print ">>> Done"
+				self.isConnected = True
+				self.checkVideo()
+				self.checkCamera()
+			else:
+				raise CameraNotConnected()
 		else:
-			raise CameraNotConnected()
+			if self.capture is not None:
+				self.capture.release()
+			self.capture = cv2.VideoCapture(self.cameraId)
+			time.sleep(0.2)
+			if not self.capture.isOpened():
+				time.sleep(1)
+				self.capture.open(self.cameraId)
+			if self.capture.isOpened():
+				print ">>> Done"
+				self.isConnected = True
+				self.checkVideo()
+				self.checkCamera()
+			else:
+				raise CameraNotConnected()
+		
+	
 		
 	def disconnect(self):
 		tries = 0
 		if self.isConnected:
 			print ">>> Disconnecting camera {0}".format(self.cameraId)
 			if self.capture is not None:
-				self.capture.close();
-				print ">>> Done"
+				if platform.system() == 'Darwin':
+					self.capture.close();
+					self.isConnected = False
+				else:
+					if self.capture.isOpened():
+						self.isConnected = False
+						while tries < 10:
+							tries += 1
+							if not self.reading:
+								self.capture.release()
+					
 				
+				print ">>> Done"
 
 	def checkCamera(self):
 		""" Checks correct camera """
 		self.capture.controls['UVCC_REQ_EXPOSURE_AUTOMODE'].set_val(1);
-		print "Exposure {0}".format(self.capture.controls['UVCC_REQ_EXPOSURE_ABS'].get_val())
 		self.setExposure(2)
-		print "Exposure {0}".format(self.capture.controls['UVCC_REQ_EXPOSURE_ABS'].get_val())
 		exposure = self.getExposure()
 		if exposure is not None:
 			if exposure < 1:
@@ -145,13 +165,10 @@ class Camera:
 			self.reading = True
 			if flush:
 				for i in range(0, flushValue):
-					self.capture.get_frame() #grab()
+					self.getImage()
 
-			ret = self.capture.get_frame();
-			if (ret is not None):
-				image=ret.img
-				size=self.capture.get_size()
-				#image=cv2.resize(image, size) 
+			(ret,image) = self.getImage()
+				
 				
 			self.reading = False
 			
@@ -235,33 +252,37 @@ class Camera:
 
 	def setFrameRate(self, value):
 		if self.isConnected:
-			self.capture.set_fps(value)
-			#self.capture.set(cv2.cv.CV_CAP_PROP_FPS, value)
+			if platform.system() == 'Darwin':
+				self.capture.set_fps(value)
+			else:
+				self.capture.set(cv2.cv.CV_CAP_PROP_FPS, value)
 
 	def _setWidth(self, value):
 		if self.isConnected:
-			(w,h)= self.capture.get_size()
-			self.capture.set_size((value,h))
+			self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, value)
 
 	def _setHeight(self, value):
 		if self.isConnected:
-			(w,h)= self.capture.get_size()
-			self.capture.set_size((w,value))
-			#self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, value)	
+			self.capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, value)	
 
 	def _updateResolution(self):
 		if self.isConnected:
-			(w,h)= self.capture.get_size()
+			if platform.system() == 'Darwin':
+				(w,h)= self.capture.get_size()
+			else:
+				w = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
+				h = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
+				
 			self.width=w
 			self.height=h
-			#self.width = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
-			#self.height = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
 
 	def setResolution(self, width, height):
-		#self._setWidth(width)
-		#self._setHeight(height)
 		if self.isConnected:
-			self.capture.set_size((width,height))
+			if platform.system() == 'Darwin':
+				self.capture.set_size((width,height))
+			else:
+				self._setWidth(width)
+				self._setHeight(height)
 		self._updateResolution()
 
 	def setUseDistortion(self, value):
@@ -284,3 +305,15 @@ class Camera:
 				value = self.capture.get(cv2.cv.CV_CAP_PROP_EXPOSURE)
 				value *= self.maxExposure
 			return value
+		
+	def getImage(self):
+		if platform.system() == 'Darwin':
+			ret = self.capture.get_frame();
+			if (ret is not None):
+				image=ret.img
+		else:
+			ret, image  = self.capture.read()
+			
+			
+		return ret, image
+			
