@@ -102,7 +102,7 @@ class Board:
 				if version == "Horus 0.1 ['$' for help]\r\n":
 					self.setSpeedMotor(1)
 					self.setAbsolutePosition(0)
-					#self.sendRequest('$100 = 71.111')
+					self.sendRequest('$100 = {0}'.format(((16/1.8)*float(profile.getProfileSetting("gear_multiplier")),)))
 					#self.enableMotor()
 					print ">>> Done"
 					self.isConnected = True
@@ -183,7 +183,6 @@ class Board:
 					self.serialPort.flushInput()
 					self.serialPort.flushOutput()
 					self.serialPort.write(req+"\r\n")
-					#print req+"\r\n"
 					if readLines:
 						ret = ''.join(self.serialPort.readlines())
 					else:
