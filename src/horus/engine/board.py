@@ -31,6 +31,7 @@ import time
 import serial
 import threading
 
+from horus.util import profile
 
 class Error(Exception):
 	def __init__(self, msg):
@@ -101,6 +102,7 @@ class Board:
 				if version == "Horus 0.1 ['$' for help]\r\n":
 					self.setSpeedMotor(1)
 					self.setAbsolutePosition(0)
+					#self.sendRequest('$100 = 71.111')
 					#self.enableMotor()
 					print ">>> Done"
 					self.isConnected = True
@@ -181,6 +183,7 @@ class Board:
 					self.serialPort.flushInput()
 					self.serialPort.flushOutput()
 					self.serialPort.write(req+"\r\n")
+					#print req+"\r\n"
 					if readLines:
 						ret = ''.join(self.serialPort.readlines())
 					else:
