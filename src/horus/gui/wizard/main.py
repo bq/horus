@@ -113,7 +113,6 @@ class Wizard(wx.Dialog):
             self.calibrationPage.videoView.stop()
             self.scanningPage.videoView.stop()
             self.parent.workbenchUpdate()
-            self.EndModal(wx.ID_OK)
             self.Destroy()
 
     def onConnectionPagePrevClicked(self):
@@ -154,6 +153,4 @@ class Wizard(wx.Dialog):
             self.parent.updatePCGProfile()
             self.parent.updateCalibrationProfile()
             self.parent.workbenchUpdate()
-            self.driver.camera.setExposure(profile.getProfileSettingInteger('exposure_scanning'))
-            self.EndModal(wx.ID_OK)
             self.Destroy()
