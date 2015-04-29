@@ -31,6 +31,7 @@ import time
 import serial
 import threading
 
+from horus.util import profile
 
 class Error(Exception):
 	def __init__(self, msg):
@@ -87,6 +88,9 @@ class Board:
 
 	def connect(self):
 		""" Opens serial port and performs handshake"""
+		
+		
+		
 		print ">>> Connecting board {0} {1}".format(self.serialName, self.baudRate)
 		self.isConnected = False
 		try:
@@ -105,6 +109,7 @@ class Board:
 				if version == "Horus 0.1 ['$' for help]\r\n":
 					self.setSpeedMotor(1)
 					self.setAbsolutePosition(0)
+					self.sendRequest('$100 = {0}'.format(((16/1.8)*float(profile.getProfileSetting("gear_multiplier")),)))
 					#self.enableMotor()
 					print ">>> Done"
 					self.isConnected = True

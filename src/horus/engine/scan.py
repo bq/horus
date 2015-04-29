@@ -218,7 +218,7 @@ class Scan:
 		self.driver.board.setRightLaserOff()
 
 		#-- Setup camera
-		self.driver.camera.capture.read()
+		self.driver.camera.getImage()
 
 	#-- Threads
 

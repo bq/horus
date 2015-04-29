@@ -317,6 +317,8 @@ setting('machine_center_is_zero', 'True', bool, 'machine', 'hidden').setLabel(_(
 setting('machine_shape', 'Circular', ['Square','Circular'], 'machine', 'hidden').setLabel(_("Build area shape"), _("The shape of machine build area."))
 
 
+setting('gear_multiplier', 1, int, 'advanced', _('Gear Multiplier'), True)
+
 ##-- Preferences
 
 setting('language', 'English', str, 'preference', 'hidden').setLabel(_('Language'), _('Change the language in which Horus runs. Switching language requires a restart of Horus'))
