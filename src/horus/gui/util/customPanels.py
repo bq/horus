@@ -83,16 +83,14 @@ class ExpandableControl(wx.Panel):
 						panel.undoButton.Hide()
 					if panel.hasRestore:
 						panel.restoreButton.Hide()
+				panel.Layout()
 			self.Layout()
 			self.GetParent().Layout()
 			self.GetParent().GetParent().Layout()
 
-	def initialize(self):
+	def updateCallbacks(self):
 		for panel in self.panels.values():
-			panel.initialize()
-		self.Layout()
-		self.GetParent().Layout()
-		self.GetParent().GetParent().Layout()
+			panel.updateCallbacks()
 
 	def enableContent(self):
 		for panel in self.panels.values():
@@ -105,6 +103,10 @@ class ExpandableControl(wx.Panel):
 	def updateProfile(self):
 		for panel in self.panels.values():
 			panel.updateProfile()
+
+	def enableRestore(self, value):
+		for panel in self.panels.values():
+			panel.enableRestore(value)
 
 class ExpandablePanel(wx.Panel):
 	def __init__(self, parent, title="", hasUndo=True, hasRestore=True):
@@ -124,7 +126,6 @@ class ExpandablePanel(wx.Panel):
 
 		if self.hasUndo:
 			self.undoButton.Disable()
-		self.content.Disable()
 		self.content.Hide()
 
 		#-- Events
@@ -153,8 +154,7 @@ class ExpandablePanel(wx.Panel):
 
 	def createSection(self, name, title=None, tag=None):
 		section = SectionPanel(self.content, title, tag=tag)
-		if self.hasUndo:
-			section.setUndoCallbacks(self.appendUndo, self.releaseUndo)
+		section.setUndoCallbacks(self.appendUndo, self.releaseUndo)
 		self.sections.update({name : section})
 		self.contentBox.Add(section, 0, wx.ALL|wx.EXPAND, 5)
 		self.Layout()
@@ -165,7 +165,7 @@ class ExpandablePanel(wx.Panel):
 		self.sections.clear()
 		self.contentBox.Clear()
 
-	def initialize(self):
+	def updateCallbacks(self):
 		pass
 
 	def resetProfile(self):
@@ -175,7 +175,7 @@ class ExpandablePanel(wx.Panel):
 	def updateProfile(self):
 		for section in self.sections.values():
 			section.updateProfile()
-			
+
 	def onUndoButtonClicked(self, event):
 		if self.undo():
 			self.undoButton.Enable()
@@ -194,10 +194,12 @@ class ExpandablePanel(wx.Panel):
 				self.undoButton.Disable()
 
 	def appendUndo(self, _object):
-		self.undoObjects.append(_object)
+		if self.hasUndo:
+			self.undoObjects.append(_object)
 
 	def releaseUndo(self):
-		self.undoButton.Enable()
+		if self.hasUndo:
+			self.undoButton.Enable()
 		if self.hasRestore:
 			self.restoreButton.Enable()
 
@@ -206,6 +208,13 @@ class ExpandablePanel(wx.Panel):
 			objectToUndo = self.undoObjects.pop()
 			objectToUndo.undo()
 		return len(self.undoObjects) > 0
+
+	def enableRestore(self, value):
+		if hasattr(self, 'restoreButton'):
+			if value:
+				self.restoreButton.Enable()
+			else:
+				self.restoreButton.Disable()
 
 class SectionPanel(wx.Panel):
 	def __init__(self, parent, title=None, tag=None):
@@ -227,11 +236,10 @@ class SectionPanel(wx.Panel):
 		self.SetSizer(self.vbox)
 		self.Layout()
 
-	def addItem(self, _type, _name, _callback, dropdown=None, tooltip=None):
-		if dropdown == None:
-			item = _type(self, _name, _callback)
-		else:
-			item = _type(self, _name, _callback,dropdown)
+	# TODO: improve tooltip implementation
+
+	def addItem(self, _type, _name, tooltip=None):
+		item = _type(self, _name)
 		item.setUndoCallbacks(self.appendUndoCallback, self.releaseUndoCallback)
 		if tooltip == None:
 			self.items.update({_name : item})
@@ -241,15 +249,37 @@ class SectionPanel(wx.Panel):
 		self.Layout()
 		return self
 
+	def updateCallback(self, _name, _callback):
+		if isinstance(self.items[_name], tuple):
+			self.items[_name][0].setEngineCallback(_callback)
+		else:
+			self.items[_name].setEngineCallback(_callback)
+
 	def resetProfile(self):
 		for item in self.items.values():
 			if isinstance(item, tuple):
-				item[0].resetProfile()
+				if item[0].IsEnabled():
+					item[0].resetProfile()
+			else:
+				if item.IsEnabled():
+					item.resetProfile()
+
+	def enable(self, _name):
+		if isinstance(self.items[_name], tuple):
+			self.items[_name][0].Enable()
+		else:
+			self.items[_name].Enable()
+
+	def disable(self, _name):
+		if isinstance(self.items[_name], tuple):
+			self.items[_name][0].Disable()
+		else:
+			self.items[_name].Disable()
 
 	def updateProfile(self):
-		scan_type=profile.getProfileSetting('scan_type')
+		scanType = profile.getProfileSetting('scan_type')
 		if self.tag != None:
-			if scan_type == self.tag:
+			if scanType == self.tag:
 				self.Show()
 			else:
 				self.Hide()
@@ -293,22 +323,27 @@ class SectionItem(wx.Panel):
 		if profile.getPreferenceBool('basic_mode'):
 			return self.setting.getCategory() is 'basic'
 		else:
-			scan_type=profile.getProfileSetting('scan_type')
+			scanType = profile.getProfileSetting('scan_type')
 			if self.setting.getTag() != None:
-				if scan_type == _("Without Texture"):
-					return self.setting.getTag() == 'no_texture'
-				elif scan_type == _("With Texture"):
+				if scanType == 'Simple Scan':
+					return self.setting.getTag() == 'simple'
+				elif scanType == 'Texture Scan':
 					return self.setting.getTag() == 'texture'
 			else:
 				return True
 
-	def update(self, value):
+	def update(self, value, trans=False):
 		if self.isVisible():
 			self.Show()
-			self.control.SetValue(value)
+			if trans:
+				self.control.SetValue(_(value))
+			else:
+				self.control.SetValue(value)
 			self._updateEngine(value)
 		else:
 			self.Hide()
+		self.Layout()
+		self.GetParent().Layout()
 
 	def _updateEngine(self, value):
 		if self.engineCallback is not None:
@@ -364,6 +399,7 @@ class Slider(SectionItem):
 								 profile.getProfileSettingInteger(self.name),
 								 int(eval(self.setting.getMinValue(), {}, {})),
 								 int(eval(self.setting.getMaxValue(), {}, {})),
+								 size=(1, -1),
 								 style=wx.SL_LABELS)
 
 		#-- Layout
@@ -416,23 +452,22 @@ class Slider(SectionItem):
 
 
 class ComboBox(SectionItem):
-	def __init__(self, parent, name, engineCallback=None, dropdown= None):
+	def __init__(self, parent, name, engineCallback=None):
 		""" """
 		SectionItem.__init__(self, parent, name, engineCallback)
-		_choices=self.setting.getType()
-		choices=[]
-		if dropdown != None:
-			for i in _choices:
-				choices.append(_(i))
-		else: 
-			choices = _choices
+
+		_choices = []
+		choices = self.setting.getType()
+		for i in choices:
+			_choices.append(_(i))
+		self.keyDict = dict(zip(_choices, choices))
 
 		#-- Elements
 		self.label = wx.StaticText(self, label=self.setting.getLabel())
 		self.control = wx.ComboBox(self, wx.ID_ANY,
-								   value=profile.getProfileSetting(self.name),
-								   choices=choices,
-								   size=(150, -1),
+								   value=_(profile.getProfileSetting(self.name)),
+								   choices=_choices,
+								   size=(1, -1),
 								   style=wx.CB_READONLY)
 
 		#-- Layout
@@ -445,19 +480,14 @@ class ComboBox(SectionItem):
 		self.control.Bind(wx.EVT_COMBOBOX, self.onComboBoxChanged)
 
 	def onComboBoxChanged(self, event):
-		self.undoValues.append(profile.getProfileSetting(self.name))
-		value = self.control.GetValue()
+		value = self.keyDict[self.control.GetValue()]
 		profile.putProfileSetting(self.name, value)
 		self._updateEngine(value)
-		if self.appendUndoCallback is not None:
-			self.appendUndoCallback(self)
-		if self.releaseUndoCallback is not None:
-			self.releaseUndoCallback()
 
 	def updateProfile(self):
 		if hasattr(self,'control'):
 			value = profile.getProfileSetting(self.name)
-			self.update(value)
+			self.update(value, trans=True)
 
 
 class CheckBox(SectionItem):
@@ -467,7 +497,7 @@ class CheckBox(SectionItem):
 
 		#-- Elements
 		self.label = wx.StaticText(self, label=self.setting.getLabel())
-		self.control = wx.CheckBox(self, style=wx.ALIGN_RIGHT)
+		self.control = wx.CheckBox(self, size=(1, -1), style=wx.ALIGN_RIGHT)
 
 		#-- Layout
 		hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -558,12 +588,10 @@ class TextBox(SectionItem):
 		if self.releaseUndoCallback is not None:
 			self.releaseUndoCallback()
 
-
 	def updateProfile(self):
 		if hasattr(self,'control'):
 			value = profile.getProfileSetting(self.name)
 			self.update(value)
-
 
 
 ##TODO: Create TextBoxArray

@@ -90,11 +90,10 @@ def _loadBinary(mesh, stream):
 def loadScene(filename):
 	obj = model.Model(filename)
 	m = obj._addMesh()
-	f = open(filename, "rb")
-	if f.read(5).lower() == "solid":
-		_loadAscii(m, f)
-	else:
-		_loadBinary(m, f)
-	f.close()
-	obj._postProcessAfterLoad()
-	return obj
+	with open(filename, "rb") as f:
+		if f.read(5).lower() == "solid":
+			_loadAscii(m, f)
+		else:
+			_loadBinary(m, f)
+		obj._postProcessAfterLoad()
+		return obj

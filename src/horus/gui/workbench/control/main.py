@@ -76,10 +76,11 @@ class ControlWorkbench(WorkbenchConnection):
 		self.addToPanel(self.scrollPanel, 0)
 		self.addToPanel(self.videoView, 1)
 
+		self.updateCallbacks()
 		self.Layout()
 
-	def initialize(self):
-		self.controls.initialize()
+	def updateCallbacks(self):
+		self.controls.updateCallbacks()
 
 	def getFrame(self):
 		return self.driver.camera.captureImage()

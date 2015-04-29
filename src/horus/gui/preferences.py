@@ -67,6 +67,10 @@ class PreferencesDialog(wx.Dialog):
 		self.languages = [row[1] for row in resources.getLanguageOptions()]
 		self.languageCombo = wx.ComboBox(self, choices=self.languages, value=profile.getPreference('language') , size=(177,-1), style=wx.CB_READONLY)
 
+		invert = profile.getProfileSettingBool('invert_motor')
+		self.invertMotorCheckBox = wx.CheckBox(self, label=_("Invert the motor direction"))
+		self.invertMotorCheckBox.SetValue(invert)
+
 		self.okButton = wx.Button(self, label=_("Ok"))
 
 		#-- Events
@@ -76,8 +80,9 @@ class PreferencesDialog(wx.Dialog):
 		self.boardsCombo.Bind(wx.EVT_COMBOBOX, self.onBoardsComboChanged)
 		self.uploadFirmwareButton.Bind(wx.EVT_BUTTON, self.onUploadFirmware)
 		self.languageCombo.Bind(wx.EVT_COMBOBOX, self.onLanguageComboChanged)
-		self.okButton.Bind(wx.EVT_BUTTON, self.onClose)
-		
+		self.invertMotorCheckBox.Bind(wx.EVT_CHECKBOX, self.onInvertMotor)
+		self.okButton.Bind(wx.EVT_BUTTON, lambda e: self.Destroy())
+		self.Bind(wx.EVT_CLOSE, lambda e: self.Destroy())
 
 		#-- Fill data
 		currentSerial = profile.getProfileSetting('serial_name')
@@ -143,17 +148,18 @@ class PreferencesDialog(wx.Dialog):
 
 		vbox.Add(wx.StaticLine(self), 0, wx.EXPAND|wx.ALL, 5)
 
+		hbox = wx.BoxSizer(wx.HORIZONTAL)
+		hbox.Add(self.invertMotorCheckBox, 0, wx.ALL, 15)
+		vbox.Add(hbox)
+
+		vbox.Add(wx.StaticLine(self), 0, wx.EXPAND|wx.ALL, 5)
+
 		vbox.Add(self.okButton, 0, wx.ALL|wx.EXPAND, 10)
 
 		self.SetSizer(vbox)
 		self.Centre()
 
 		self.Fit()
-
-	def onClose(self, event):
-		self.EndModal(wx.ID_OK)
-		self.Destroy()
-	
 
 	def onSerialNameTextChanged(self, event):
 		if len(self.serialNameCombo.GetValue()):
@@ -201,7 +207,7 @@ class PreferencesDialog(wx.Dialog):
 					if count >= 0:
 						self.gauge.SetValue(count)
 				except IOError:
-					pass
+					count += 10
 		wx.CallAfter(self.afterLoadFirmware)
 
 	def wrongBoardMessage(self):
@@ -235,6 +241,7 @@ class PreferencesDialog(wx.Dialog):
 	def onLanguageComboChanged(self, event):
 		if profile.getPreference('language') is not self.languageCombo.GetValue():
 			profile.putPreference('language', self.languageCombo.GetValue())
-			resources.setupLocalization(profile.getPreference('language'))
 			wx.MessageBox(_("You have to restart the application to make the changes effective."), 'Info', wx.OK | wx.ICON_INFORMATION)
 
+	def onInvertMotor(self, event):
+		profile.putProfileSetting('invert_motor', self.invertMotorCheckBox.GetValue())

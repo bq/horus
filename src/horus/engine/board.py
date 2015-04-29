@@ -67,6 +67,7 @@ class Board:
 		self.isConnected = False
 		self.unplugCallback = None
 		self._position = 0
+		self._direction = 1
 		self._n = 0 # Check if command fails
 
 	def setSerialName(self, serialName):
@@ -74,6 +75,12 @@ class Board:
 
 	def setBaudRate(self, baudRate):
 		self.baudRate = baudRate
+
+	def setInvertMotor(self, invertMotor):
+		if invertMotor:
+			self._direction = -1
+		else:
+			self._direction = +1
 
 	def setUnplugCallback(self, unplugCallback=None):
 		self.unplugCallback = unplugCallback
@@ -120,6 +127,7 @@ class Board:
 					self.setRightLaserOff()
 					self.disableMotor()
 					self.serialPort.close()
+					del self.serialPort
 			except serial.SerialException:
 				print "Error closing the port {0}\n".format(self.serialName)
 				print ">>> Error"
@@ -148,7 +156,7 @@ class Board:
 		self._position = pos
 
 	def moveMotor(self, nonblocking=False, callback=None):
-		self._position += self._posIncrement
+		self._position += self._posIncrement * self._direction
 		return self._sendCommand("G1X{0}".format(self._position), nonblocking, callback)
 
 	def setRightLaserOn(self):

@@ -86,69 +86,64 @@ def _loadBinary(mesh, stream, dtype, count):
 def loadScene(filename):
 	obj = model.Model(filename, isPointCloud=True)
 	m = obj._addMesh()
-	f = open(filename, "rb")
+	with open(filename, "rb") as f:
+		dtype = []
+		count = 0
+		format = None
+		line = None
+		header = ''
 
-	dtype = []
-	count = 0
-	format = None
-	line = None
-	header = ''
+		while line != 'end_header\n' and line != '':
+			line = f.readline()
+			header += line
+		#-- Discart faces
+		header = header.split('element face ')[0].split('\n')
 
-	while line != 'end_header\n' and line != '':
-		line = f.readline()
-		header += line
-	#-- Discart faces
-	header = header.split('element face ')[0].split('\n')
+		if header[0] == 'ply':
 
-	if header[0] == 'ply':
+			for line in header:
+				if 'format ' in line:
+					format = line.split(' ')[1]
+					break
 
-		for line in header:
-			if 'format ' in line:
-				format = line.split(' ')[1]
-				break
+			if format is not None:
+				if format == 'ascii':
+					fm = ''
+				elif format == 'binary_big_endian':
+					fm = '>'
+				elif format == 'binary_little_endian':
+					fm = '<'
 
-		if format is not None:
-			if format == 'ascii':
-				fm = ''
-			elif format == 'binary_big_endian':
-				fm = '>'
-			elif format == 'binary_little_endian':
-				fm = '<'
+			df = {'float' : fm+'f', 'uchar' : fm+'B'}
+			dt = {'x' : 'v', 'nx' : 'n', 'red' : 'c', 'alpha' : 'a'}
+			ds = {'x' : 3, 'nx' : 3, 'red' : 3, 'alpha' : 1}
 
-		df = {'float' : fm+'f', 'uchar' : fm+'B'}
-		dt = {'x' : 'v', 'nx' : 'n', 'red' : 'c', 'alpha' : 'a'}
-		ds = {'x' : 3, 'nx' : 3, 'red' : 3, 'alpha' : 1}
+			for line in header:
+				if 'element vertex ' in line:
+					count = int(line.split('element vertex ')[1])
+				elif 'property ' in line:
+					props = line.split(' ')
+					if props[2] in dt.keys():
+						dtype = dtype + [(dt[props[2]], df[props[1]], (ds[props[2]],))]
 
-		for line in header:
-			if 'element vertex ' in line:
-				count = int(line.split('element vertex ')[1])
-			elif 'property ' in line:
-				props = line.split(' ')
-				if props[2] in dt.keys():
-					dtype = dtype + [(dt[props[2]], df[props[1]], (ds[props[2]],))]
+			dtype = np.dtype(dtype)
 
-		dtype = np.dtype(dtype)
+			if format is not None:
+				if format == 'ascii':
+					m._prepareVertexCount(count)
+					_loadAscii(m, f, dtype, count)
+				elif format == 'binary_big_endian' or format == 'binary_little_endian':
+					_loadBinary(m, f, dtype, count)
+			obj._postProcessAfterLoad()
+			return obj
 
-		if format is not None:
-			if format == 'ascii':
-				m._prepareVertexCount(count)
-				_loadAscii(m, f, dtype, count)
-			elif format == 'binary_big_endian' or format == 'binary_little_endian':
-				_loadBinary(m, f, dtype, count)
-
-		f.close()
-		obj._postProcessAfterLoad()
-		return obj
-
-	else:
-		print "Error: incorrect file format."
-		f.close()
-		return None
+		else:
+			print "Error: incorrect file format."
+			return None
 
 def saveScene(filename, _object):
-	f = open(filename, 'wb')
-	saveSceneStream(f, _object)
-	f.close()
+	with open(filename, 'wb') as f:
+		saveSceneStream(f, _object)
 
 def saveSceneStream(stream, _object):
 	m = _object._mesh
@@ -172,13 +167,11 @@ def saveSceneStream(stream, _object):
 		frame += "element face 0\n"
 		frame += "property list uchar int vertex_indices\n"
 		frame += "end_header\n"
+		stream.write(frame)
 		if m.vertexCount > 0:
-			points = m.vertexes
-			colors = m.colors
 			if binary:
-				for i in range(m.vertexCount):
-					frame += struct.pack("<fffBBB", points[i,0], points[i,1], points[i,2] , colors[i,0], colors[i,1], colors[i,2])
+				for i in xrange(m.vertexCount):
+					stream.write(struct.pack("<fffBBB", m.vertexes[i,0], m.vertexes[i,1], m.vertexes[i,2] , m.colors[i,0], m.colors[i,1], m.colors[i,2]))
 			else:
-				for i in range(m.vertexCount):
-					frame += "{0} {1} {2} {3} {4} {5}\n".format(points[i,0], points[i,1], points[i,2] , colors[i,0], colors[i,1], colors[i,2])
-			stream.write(frame)
+				for i in xrange(m.vertexCount):
+					stream.write("{0} {1} {2} {3} {4} {5}\n".format(m.vertexes[i,0], m.vertexes[i,1], m.vertexes[i,2] , m.colors[i,0], m.colors[i,1], m.colors[i,2]))

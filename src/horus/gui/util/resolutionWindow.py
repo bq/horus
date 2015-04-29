@@ -6,8 +6,8 @@
 #                                                                       #
 # Copyright (C) 2014-2015 Mundo Reader S.L.                             #
 #                                                                       #
-# Date: November 2014                                                   #
-# Author: Jesús Arroyo Torrens <jesus.arroyo@bq.com>                    #
+# Date: February 2015                                                   #
+# Author: Irene Sanz Nieto <irene.sanz@bq.com>                          #
 #                                                                       #
 # This program is free software: you can redistribute it and/or modify  #
 # it under the terms of the GNU General Public License as published by  #
@@ -24,31 +24,38 @@
 #                                                                       #
 #-----------------------------------------------------------------------#
 
-__author__ = "Jesús Arroyo Torrens <jesus.arroyo@bq.com>"
+__author__ = "Irene Sanz Nieto <irene.sanz@bq.com>"
 __license__ = "GNU General Public License v2 http://www.gnu.org/licenses/gpl.html"
 
-
-WrongFirmware       = "Wrong Firmware"
-BoardNotConnected   = "Board Not Connected"
-CameraNotConnected  = "Camera Not Connected"
-WrongCamera         = "Wrong Camera"
-InvalidVideo        = "Invalid Video"
-CalibrationError    = "Calibration Error"
-CalibrationCanceled = "Calibration Canceled"
-ScanError           = "Scan Error"
+import wx._core
 
 
-#Define a fake _() function to fake the gettext tools in to generating strings for the profile settings.
-def _(n):
-	return n
+class ResolutionWindow(wx.Dialog):
 
-_("Wrong Firmware")
-_("Board Not Connected")
-_("Camera Not Connected")
-_("Wrong Camera")
-_("Invalid Video")
-_("Calibration Error")
-_("Calibration Canceled")
-_("Scan Error")
+    def __init__(self, parent):
+        super(ResolutionWindow, self).__init__(parent, title=_('Resolution updated'), size=(420,-1), style=wx.DEFAULT_FRAME_STYLE^wx.RESIZE_BORDER)
 
-del _
+        #-- Elements
+        self.description = wx.StaticText(self, label=_('WARNING: if you change the resolution, you need to calibrate again with the same resolution!'))
+        self.description.Wrap(400)
+
+        self.okButton = wx.Button(self, label=_('OK'))
+
+        #-- Events
+        self.okButton.Bind(wx.EVT_BUTTON, self.onClose)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
+
+        #-- Layout
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        vbox.Add(self.description, 0, wx.ALL|wx.CENTER, 10)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        hbox.Add(self.okButton, 0, wx.ALL, 3)
+        vbox.Add(hbox, 0, wx.ALL|wx.CENTER, 10)
+        self.SetSizer(vbox)
+        self.Center()
+        self.Fit()
+
+        self.ShowModal()
+
+    def onClose(self, event):
+        self.Destroy()

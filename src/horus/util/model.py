@@ -7,7 +7,7 @@
 # Copyright (C) 2014-2015 Mundo Reader S.L.                             #
 # Copyright (C) 2013 David Braam from Cura Project                      #
 #                                                                       #
-# Date: June 2014                                                       #
+# Date: June, 2014 - April 2015                                         #
 # Author: Jesús Arroyo Torrens <jesus.arroyo@bq.com>                    #
 #                                                                       #
 # This program is free software: you can redistribute it and/or modify  #
@@ -50,10 +50,10 @@ class Model(object):
 		self._mesh = None
 		self._position = np.array([0.0, 0.0, 0.0])
 		self._matrix = np.matrix([[1,0,0],[0,1,0],[0,0,1]], np.float64)
-		self._transformedMin = None
-		self._transformedMax = None
-		self._transformedSize = np.array([0.0, 0.0, 0.0])
-		self._boundaryCircleSize = 20.0
+		self._min = None
+		self._max = None
+		self._size = np.array([0.0, 0.0, 0.0])
+		self._boundaryCircleSize = 75.0
 		self._drawOffset = np.array([0.0, 0.0, 0.0])
 
 		self._isPointCloud = isPointCloud
@@ -63,37 +63,32 @@ class Model(object):
 		return self._mesh
 
 	def _postProcessAfterLoad(self):
-		#if not self._isPointCloud:
-		#	self._mesh._calculateNormals()
-		self.processMatrix()
+		if len(self._mesh.vertexes) > 0:
+			if not self._isPointCloud:
+				self._mesh._calculateNormals()
 
-	def applyMatrix(self, m):
-		self._matrix *= m
-		self.processMatrix()
+			self._min = np.array([np.inf,np.inf,np.inf], np.float64)
+			self._max = np.array([-np.inf,-np.inf,-np.inf], np.float64)
+			self._boundaryCircleSize = 0
 
-	def processMatrix(self):
-		self._transformedMin = np.array([np.inf,np.inf,np.inf], np.float64)
-		self._transformedMax = np.array([-np.inf,-np.inf,-np.inf], np.float64)
-		self._boundaryCircleSize = 0
+			vertexes = self._mesh.vertexes
+			vmin = vertexes.min(0)
+			vmax = vertexes.max(0)
+			for n in xrange(0, 3):
+				self._min[n] = min(vmin[n], self._min[n])
+				self._max[n] = max(vmax[n], self._max[n])
 
-		transformedVertexes = self._mesh.getTransformedVertexes()
-		transformedMin = transformedVertexes.min(0)
-		transformedMax = transformedVertexes.max(0)
-		for n in xrange(0, 3):
-			self._transformedMin[n] = min(transformedMin[n], self._transformedMin[n])
-			self._transformedMax[n] = max(transformedMax[n], self._transformedMax[n])
+			#Calculate the boundary circle
+			center = vmin + (vmax - vmin) / 2.0
+			boundaryCircleSize = round(np.max(np.linalg.norm(vertexes-center, axis=1)), 3)
+			self._boundaryCircleSize = max(self._boundaryCircleSize, boundaryCircleSize)
 
-		#Calculate the boundary circle
-		transformedSize = transformedMax - transformedMin
-		center = transformedMin + transformedSize / 2.0
-		boundaryCircleSize = round(math.sqrt(np.max(((transformedVertexes[::,0] - center[0]) * (transformedVertexes[::,0] - center[0])) + ((transformedVertexes[::,1] - center[1]) * (transformedVertexes[::,1] - center[1])) + ((transformedVertexes[::,2] - center[2]) * (transformedVertexes[::,2] - center[2])))), 3)
-		self._boundaryCircleSize = max(self._boundaryCircleSize, boundaryCircleSize)
-
-		self._transformedSize = self._transformedMax - self._transformedMin
-		self._drawOffset = (self._transformedMax + self._transformedMin) / 2
-		self._drawOffset[2] = self._transformedMin[2]
-		self._transformedMax -= self._drawOffset
-		self._transformedMin -= self._drawOffset
+			self._size = self._max - self._min
+			if not self._isPointCloud:
+				self._drawOffset = (self._max + self._min) / 2
+				self._drawOffset[2] = self._min[2]
+			self._max -= self._drawOffset
+			self._min -= self._drawOffset
 
 	def getName(self):
 		return self._name
@@ -107,11 +102,11 @@ class Model(object):
 		return self._matrix
 
 	def getMaximum(self):
-		return self._transformedMax
+		return self._max
 	def getMinimum(self):
-		return self._transformedMin
+		return self._min
 	def getSize(self):
-		return self._transformedSize
+		return self._size
 	def getDrawOffset(self):
 		return self._drawOffset
 	def getBoundaryCircle(self):
@@ -125,36 +120,6 @@ class Model(object):
 			np.linalg.norm(self._matrix[::,0].getA().flatten()),
 			np.linalg.norm(self._matrix[::,1].getA().flatten()),
 			np.linalg.norm(self._matrix[::,2].getA().flatten())], np.float64);
-
-	def setScale(self, scale, axis, uniform):
-		currentScale = np.linalg.norm(self._matrix[::,axis].getA().flatten())
-		scale /= currentScale
-		if scale == 0:
-			return
-		if uniform:
-			matrix = [[scale,0,0], [0, scale, 0], [0, 0, scale]]
-		else:
-			matrix = [[1.0,0,0], [0, 1.0, 0], [0, 0, 1.0]]
-			matrix[axis][axis] = scale
-		self.applyMatrix(np.matrix(matrix, np.float64))
-
-	def setSize(self, size, axis, uniform):
-		scale = self.getSize()[axis]
-		scale = size / scale
-		if scale == 0:
-			return
-		if uniform:
-			matrix = [[scale,0,0], [0, scale, 0], [0, 0, scale]]
-		else:
-			matrix = [[1,0,0], [0, 1, 0], [0, 0, 1]]
-			matrix[axis][axis] = scale
-		self.applyMatrix(np.matrix(matrix, np.float64))
-
-	def resetScale(self):
-		x = 1/np.linalg.norm(self._matrix[::,0].getA().flatten())
-		y = 1/np.linalg.norm(self._matrix[::,1].getA().flatten())
-		z = 1/np.linalg.norm(self._matrix[::,2].getA().flatten())
-		self.applyMatrix(np.matrix([[x,0,0],[0,y,0],[0,0,z]], np.float64))
 
 
 class Mesh(object):
@@ -197,33 +162,6 @@ class Mesh(object):
 		#Calculate the normals
 		tris = self.vertexes.reshape(self.vertexCount / 3, 3, 3)
 		normals = np.cross( tris[::,1 ] - tris[::,0]  , tris[::,2 ] - tris[::,0] )
-		lens = np.sqrt( normals[:,0]**2 + normals[:,1]**2 + normals[:,2]**2 )
-		normals[:,0] /= lens
-		normals[:,1] /= lens
-		normals[:,2] /= lens
-		
-		n = np.zeros((self.vertexCount / 3, 9), np.float32)
-		n[:,0:3] = normals
-		n[:,3:6] = normals
-		n[:,6:9] = normals
+		normals /= np.linalg.norm(normals)
+		n = np.concatenate((np.concatenate((normals, normals), axis=1), normals), axis=1)
 		self.normal = n.reshape(self.vertexCount, 3)
-
-	def _vertexHash(self, idx):
-		v = self.vertexes[idx]
-		return int(v[0] * 100) | int(v[1] * 100) << 10 | int(v[2] * 100) << 20
-
-	def _idxFromHash(self, map, idx):
-		vHash = self._vertexHash(idx)
-		for i in map[vHash]:
-			if np.linalg.norm(self.vertexes[i] - self.vertexes[idx]) < 0.001:
-				return iz
-
-	def getTransformedVertexes(self, applyOffsets = False):
-		if applyOffsets:
-			pos = self._obj._position.copy()
-			pos.resize((3))
-			pos[2] = self._obj.getSize()[2] / 2
-			offset = self._obj._drawOffset.copy()
-			offset[2] += self._obj.getSize()[2] / 2
-			return (np.matrix(self.vertexes, copy = False) * np.matrix(self._obj._matrix, np.float32)).getA() - offset + pos
-		return (np.matrix(self.vertexes, copy = False) * np.matrix(self._obj._matrix, np.float32)).getA()

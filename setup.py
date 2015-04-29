@@ -15,7 +15,7 @@ def package_data_dirs(source, sub_folders):
 	return dirs
 
 setup(name='Horus',
-      version='0.1',
+      version='0.1.1.1',
       author='Jesús Arroyo Torrens',
       author_email='jesus.arroyo@bq.com',
       description='Horus is a full software solution for 3D scanning',

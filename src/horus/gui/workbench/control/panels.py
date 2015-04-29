@@ -46,18 +46,25 @@ class CameraControl(ExpandablePanel):
         self.driver = Driver.Instance()
         self.main = self.GetParent().GetParent().GetParent().GetParent()
 
-        self.initialize()
-        
-    def initialize(self):
         self.clearSections()
         section = self.createSection('camera_control')
-        section.addItem(Slider, 'brightness_control', self.driver.camera.setBrightness)
-        section.addItem(Slider, 'contrast_control', self.driver.camera.setContrast)
-        section.addItem(Slider, 'saturation_control', self.driver.camera.setSaturation)
-        section.addItem(Slider, 'exposure_control', self.driver.camera.setExposure)
-        section.addItem(ComboBox, 'framerate_control', lambda v: self.driver.camera.setFrameRate(int(v)))
-        section.addItem(ComboBox, 'resolution_control', lambda v: self.driver.camera.setResolution(int(v.split('x')[0]), int(v.split('x')[1])))
-        section.addItem(CheckBox, 'use_distortion_control', self.driver.camera.setUseDistortion, tooltip=_("Use the distortion vector to remove the distortion caused by the camera from the image. This process slows the video feed from the camera."))
+        section.addItem(Slider, 'brightness_control', tooltip=_('Image luminosity. Low values are better for environments with high ambient light conditions. High values are recommended for poorly lit places'))
+        section.addItem(Slider, 'contrast_control', tooltip=_('Relative difference in intensity between an image point and its surroundings. Low values are recommended for black or very dark colored objects. High values are better for very light colored objects'))
+        section.addItem(Slider, 'saturation_control', tooltip=_('Purity of color. Low values will cause colors to disappear from the image. High values will show an image with very intense colors'))
+        section.addItem(Slider, 'exposure_control', tooltip=_('Amount of light per unit area. It is controlled by the time the camera sensor is exposed during a frame capture. High values are recommended for poorly lit places'))
+        section.addItem(ComboBox, 'framerate_control', tooltip=_('Number of frames captured by the camera every second. Maximum frame rate is recommended'))
+        section.addItem(ComboBox, 'resolution_control', tooltip=_('Size of the video. Maximum resolution is recommended'))
+        section.addItem(CheckBox, 'use_distortion_control', tooltip=_("This option applies lens distortion correction to the video. This process slows the video feed from the camera"))
+
+    def updateCallbacks(self):
+        section = self.sections['camera_control']
+        section.updateCallback('brightness_control', self.driver.camera.setBrightness)
+        section.updateCallback('contrast_control', self.driver.camera.setContrast)
+        section.updateCallback('saturation_control', self.driver.camera.setSaturation)
+        section.updateCallback('exposure_control', self.driver.camera.setExposure)
+        section.updateCallback('framerate_control', lambda v: self.driver.camera.setFrameRate(int(v)))
+        section.updateCallback('resolution_control', lambda v: self.driver.camera.setResolution(int(v.split('x')[0]), int(v.split('x')[1])))
+        section.updateCallback('use_distortion_control', lambda v: self.driver.camera.setUseDistortion(v))
 
 
 class LaserControl(ExpandablePanel):
@@ -68,13 +75,16 @@ class LaserControl(ExpandablePanel):
         
         self.driver = Driver.Instance()
 
-        self.initialize()
-        
-    def initialize(self):
         self.clearSections()
         section = self.createSection('laser_control')
-        section.addItem(ToggleButton, 'left_button', (self.driver.board.setLeftLaserOn, self.driver.board.setLeftLaserOff))
-        section.addItem(ToggleButton, 'right_button', (self.driver.board.setRightLaserOn, self.driver.board.setRightLaserOff))
+        section.addItem(ToggleButton, 'left_button')
+        section.addItem(ToggleButton, 'right_button')
+
+    def updateCallbacks(self):
+        section = self.sections['laser_control']
+        section.updateCallback('left_button', (self.driver.board.setLeftLaserOn, self.driver.board.setLeftLaserOff))
+        section.updateCallback('right_button', (self.driver.board.setRightLaserOn, self.driver.board.setRightLaserOff))
+
 
 class LDRControl(ExpandablePanel):
     """"""
@@ -84,13 +94,13 @@ class LDRControl(ExpandablePanel):
         
         self.driver = Driver.Instance()
 
-        self.initialize()
-        
-    def initialize(self):
         self.clearSections()
         section = self.createSection('ldr_control')
-        section.addItem(LDRSection, 'ldr_value', lambda v, c: self.driver.board.sendRequest(v, nonblocking=True, callback=c, readLines=True))
+        section.addItem(LDRSection, 'ldr_value')
 
+    def updateCallbacks(self):
+        section = self.sections['ldr_control']
+        section.updateCallback('ldr_value', lambda v, c: self.driver.board.sendRequest(v, nonblocking=True, callback=c, readLines=True))
 
 
 class MotorControl(ExpandablePanel):
@@ -101,16 +111,21 @@ class MotorControl(ExpandablePanel):
         
         self.driver = Driver.Instance()
 
-        self.initialize()
-        
-    def initialize(self):
         self.clearSections()
         section = self.createSection('motor_control')
-        section.addItem(TextBox, 'step_degrees_control', lambda v: self.driver.board.setRelativePosition(self.getValueFloat(v)))
-        section.addItem(TextBox, 'feed_rate_control', lambda v: self.driver.board.setSpeedMotor(self.getValueInteger(v)))
-        section.addItem(TextBox, 'acceleration_control', lambda v: self.driver.board.setAccelerationMotor(self.getValueInteger(v)))
-        section.addItem(CallbackButton, 'move_button', lambda c: self.driver.board.moveMotor(nonblocking=True, callback=c))
-        section.addItem(ToggleButton, 'enable_button', (self.driver.board.enableMotor, self.driver.board.disableMotor))
+        section.addItem(TextBox, 'step_degrees_control')
+        section.addItem(TextBox, 'feed_rate_control')
+        section.addItem(TextBox, 'acceleration_control')
+        section.addItem(CallbackButton, 'move_button')
+        section.addItem(ToggleButton, 'enable_button')
+
+    def updateCallbacks(self):
+        section = self.sections['motor_control']
+        section.updateCallback('step_degrees_control', lambda v: self.driver.board.setRelativePosition(self.getValueFloat(v)))
+        section.updateCallback('feed_rate_control', lambda v: self.driver.board.setSpeedMotor(self.getValueInteger(v)))
+        section.updateCallback('acceleration_control', lambda v: self.driver.board.setAccelerationMotor(self.getValueInteger(v)))
+        section.updateCallback('move_button', lambda c: self.driver.board.moveMotor(nonblocking=True, callback=c))
+        section.updateCallback('enable_button', (self.driver.board.enableMotor, self.driver.board.disableMotor))
 
     #TODO: move
     def getValueInteger(self, value):
@@ -134,12 +149,13 @@ class GcodeControl(ExpandablePanel):
         
         self.driver = Driver.Instance()
 
-        self.initialize()
-        
-    def initialize(self):
         self.clearSections()
         section = self.createSection('gcode_control')
-        section.addItem(GcodeSection, 'gcode_gui', lambda v, c: self.driver.board.sendRequest(v, nonblocking=True, callback=c, readLines=True))
+        section.addItem(GcodeSection, 'gcode_gui')
+
+    def updateCallbacks(self):
+        section = self.sections['gcode_control']
+        section.updateCallback('gcode_gui', lambda v, c: self.driver.board.sendRequest(v, nonblocking=True, callback=c, readLines=True))
 
 
 class GcodeSection(SectionItem):
@@ -188,6 +204,7 @@ class GcodeSection(SectionItem):
         else:
             self.Hide()
 
+
 class LDRSection(SectionItem):
     def __init__(self, parent, name, engineCallback=None):
         """"""
@@ -197,15 +214,15 @@ class LDRSection(SectionItem):
         self.LDR0 = wx.Button(self, label='LDR 0')
         self.LDR1 = wx.Button(self, label='LDR 1')
 
-        self.response = wx.TextCtrl(self, size=(10,250), style=wx.TE_MULTILINE)
+        self.response = wx.TextCtrl(self, size=(10,40), style=wx.TE_MULTILINE)
 
         #-- Layout
         vbox =wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(self.LDR0, 0, wx.ALL|wx.EXPAND, 12)
-        hbox.Add(self.LDR1, 0, wx.ALL|wx.EXPAND, 12)
+        hbox.Add(self.LDR0, -1, wx.ALIGN_CENTER, 12)
+        hbox.Add(self.LDR1, -1, wx.ALIGN_CENTER, 12)
         vbox.Add(hbox, 0, wx.ALL|wx.EXPAND, 0)
-        vbox.Add(self.response, 1, wx.ALL^wx.LEFT|wx.EXPAND, 12)
+        vbox.Add(self.response, 1, wx.EXPAND, 12)
         self.SetSizer(vbox)
         self.Layout()
 

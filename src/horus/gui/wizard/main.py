@@ -150,7 +150,7 @@ class Wizard(wx.Dialog):
             self.connectionPage.videoView.stop()
             self.calibrationPage.videoView.stop()
             self.scanningPage.videoView.stop()
-            profile.putPreference('workbench', 'scanning')
+            profile.putPreference('workbench', 'Scanning workbench')
             self.parent.updatePCGProfile()
             self.parent.updateCalibrationProfile()
             self.parent.workbenchUpdate()

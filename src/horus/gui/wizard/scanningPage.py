@@ -59,18 +59,28 @@ class ScanningPage(WizardPage):
 												choices=[_("High"), _("Medium"), _("Low")],
 												style=wx.CB_READONLY)
 
+		_choices = []
+		choices = profile.getProfileSettingObject('use_laser').getType()
+		for i in choices:
+			_choices.append(_(i))
+		self.laserDict = dict(zip(_choices, choices))
 		self.laserLabel = wx.StaticText(self.panel, label=_("Laser"))
-		use_laser=profile.getProfileSettingObject('use_laser').getType()
+		useLaser = profile.getProfileSettingObject('use_laser').getType()
 		self.laserComboBox = wx.ComboBox(self.panel, wx.ID_ANY,
-										value=profile.getProfileSetting('use_laser'),
-										choices=[_(use_laser[0]), _(use_laser[1]), _(use_laser[2])],
+										value=_(profile.getProfileSetting('use_laser')),
+										choices=_choices,
 										style=wx.CB_READONLY)
 
-		self.scanTypeLabel = wx.StaticText(self.panel, label=_("Scan Type"))
-		scan_type=profile.getProfileSettingObject('scan_type').getType()
+		_choices = []
+		choices = profile.getProfileSettingObject('scan_type').getType()
+		for i in choices:
+			_choices.append(_(i))
+		self.scanTypeDict = dict(zip(_choices, choices))
+		self.scanTypeLabel = wx.StaticText(self.panel, label=_('Scan'))
+		scanType = profile.getProfileSettingObject('scan_type').getType()
 		self.scanTypeComboBox = wx.ComboBox(self.panel, wx.ID_ANY,
-											value=profile.getProfileSetting('scan_type'),
-											choices=[_(scan_type[0]), _(scan_type[1])],
+											value=_(profile.getProfileSetting('scan_type')),
+											choices=_choices,
 											style=wx.CB_READONLY)
 
 		self.skipButton.Hide()
@@ -117,14 +127,15 @@ class ScanningPage(WizardPage):
 			value = -0.9
 		elif value ==_("Low"):
 			value = -1.8
+
 		profile.putProfileSetting('step_degrees_scanning', value)
 		self.pcg.setDegrees(value)
 
 	def onLaserComboBoxChanged(self, event):
-		value = event.GetEventObject().GetValue()
+		value = self.laserDict[event.GetEventObject().GetValue()]
 		profile.putProfileSetting('use_laser', value)
-		useLeft = value == _("Left") or value ==_("Both")
-		useRight = value == _("Right") or value ==_("Both")
+		useLeft = value == 'Left' or value == 'Both'
+		useRight = value == 'Right' or value == 'Both'
 		if useLeft:
 			self.driver.board.setLeftLaserOn()
 		else:
@@ -137,8 +148,12 @@ class ScanningPage(WizardPage):
 		self.pcg.setUseLaser(useLeft, useRight)
 
 	def onScanTypeComboBoxChanged(self, event):
-		value = event.GetEventObject().GetValue()
+		value = self.scanTypeDict[event.GetEventObject().GetValue()]
 		profile.putProfileSetting('scan_type', value)
+		if value == 'Simple Scan':
+			self.driver.camera.setExposure(profile.getProfileSettingInteger('laser_exposure_scanning'))
+		elif value == 'Texture Scan':
+			self.driver.camera.setExposure(profile.getProfileSettingInteger('color_exposure_scanning'))
 
 	def getFrame(self):
 		frame = self.driver.camera.captureImage()
@@ -146,17 +161,17 @@ class ScanningPage(WizardPage):
 
 	def updateStatus(self, status):
 		if status:
-			profile.putPreference('workbench', 'scanning')
+			profile.putPreference('workbench', 'Scanning workbench')
 			self.GetParent().parent.workbenchUpdate(False)
 			self.videoView.play()
 			value = profile.getProfileSetting('use_laser')
-			if value ==_("Left"):
+			if value == 'Left':
 				self.driver.board.setLeftLaserOn()
 				self.driver.board.setRightLaserOff()
-			elif value ==_("Right"):
+			elif value == 'Right':
 				self.driver.board.setLeftLaserOff()
 				self.driver.board.setRightLaserOn()
-			elif value ==_("Both"):
+			elif value == 'Both':
 				self.driver.board.setLeftLaserOn()
 				self.driver.board.setRightLaserOn()
 		else:

@@ -3,7 +3,7 @@ Maintainer: Jesús Arroyo Torrens <jesus.arroyo@bq.com>
 Section: misc
 Priority: optional
 Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7.4.3)
-Standards-Version: 3.9.1
+Standards-Version: 3.9.5
 
 Package: horus
 Architecture: any
