@@ -104,4 +104,5 @@ class PatternDistanceWindow(wx.Dialog):
         self.Destroy()
 
     def onClose(self, event):
+        self.EndModal(wx.ID_OK)
         self.Destroy()
