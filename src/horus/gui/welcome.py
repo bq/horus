@@ -134,17 +134,17 @@ class CreateNew(wx.Panel):
         self.GetParent().GetParent().Close()
 
     def onScan(self, event):
-        profile.putPreference('workbench', 'scanning')
+        profile.putPreference('workbench', 'Scanning workbench')
         self.GetParent().GetParent().parent.workbenchUpdate()
         self.GetParent().GetParent().Close()
 
     def onAdvancedControl(self, event):
-        profile.putPreference('workbench', 'control')
+        profile.putPreference('workbench', 'Control workbench')
         self.GetParent().GetParent().parent.workbenchUpdate()
         self.GetParent().GetParent().Close()
 
     def onAdvancedCalibration(self, event):
-        profile.putPreference('workbench', 'calibration')
+        profile.putPreference('workbench', 'Calibration workbench')
         self.GetParent().GetParent().parent.workbenchUpdate()
         self.GetParent().GetParent().Close()
 
@@ -172,7 +172,7 @@ class OpenRecent(wx.Panel):
 
     def onButtonPressed(self, event):
         button = event.GetEventObject()
-        profile.putPreference('workbench', 'scanning')
+        profile.putPreference('workbench', 'Scanning workbench')
         self.GetParent().GetParent().parent.workbenchUpdate()
         self.GetParent().GetParent().parent.appendLastFile(button.GetName())
         self.GetParent().GetParent().parent.scanningWorkbench.sceneView.loadFile(button.GetName())

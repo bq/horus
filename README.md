@@ -1,15 +1,17 @@
 # Horus
 
-Horus is a general solution for 3D scanning. It provides graphic user interfaces for connection, configuration, control, calibration and scanning. It is ready to use with Open Source [Ciclop 3D Scanner](http://diwo.bq.com/en/ciclop-released/) [[es](http://diwo.bq.com/ciclop-released/)]
+Horus is a general solution for 3D scanning. It provides graphic user interfaces for connection, configuration, control, calibration and scanning. It is ready to use with Open Source [Ciclop 3D Scanner](https://github.com/bq/ciclop).
 
 This project has been developed in Python language and it is distributed under GPL v2 license.
 
 More interest links are shown below:
 
 * [Presentation](http://diwo.bq.com/en/presentacion-ciclop-horus/) [[es](http://diwo.bq.com/presentacion-ciclop-horus/)]
+* [3D Design](http://diwo.bq.com/en/ciclop-released/) [[es](http://diwo.bq.com/ciclop-released/)]
 * [Electronics](http://diwo.bq.com/en/zum-scan-released/) [[es](http://diwo.bq.com/zum-scan-released/)]
 * [Firmware](http://diwo.bq.com/en/horus-fw-released/) [[es](http://diwo.bq.com/horus-fw-released/)]
-* [Software](http://diwo.bq.com/horus-released/) [[es](http://diwo.bq.com/horus-released/)]
+* [Software](http://diwo.bq.com/en/horus-released/) [[es](http://diwo.bq.com/horus-released/)]
+* [Documentation](http://diwo.bq.com/en/documentation-ciclop-and-horus/) [[es](http://diwo.bq.com/documentation-ciclop-and-horus/)]
 
 # Installing
 
@@ -18,8 +20,8 @@ More interest links are shown below:
 Add our PPA keys
 
 ```bash
-sudo add-apt-repository ppa:jesus-arroyo/opencv
-sudo add-apt-repository ppa:jesus-arroyo/horus
+sudo add-apt-repository ppa:bqopensource/opencv
+sudo add-apt-repository ppa:bqopensource/horus
 ```
 
 Upgrade your system
@@ -146,7 +148,15 @@ or
 git clone git@github.com:bq/opencv.git
 ```
 
-## 3. Build packages
+## 3. Execute source code
+
+In the project directory, execute the command:
+
+```bash
+python src/horus.py
+```
+
+## 4. Build packages
 
 Horus development comes with a script "package.sh", this script has been designed to run under *nix OSes (Linux, MacOS). For Windows the package.sh script can be run from bash using git.
 The "package.sh" script generates a final release package. You should not need it during development, unless you are changing the release process. If you want to distribute your own version of Horus, then the package.sh script will allow you to do that.

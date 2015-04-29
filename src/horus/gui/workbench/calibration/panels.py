@@ -32,31 +32,73 @@ import numpy as np
 
 from horus.gui.util.customPanels import ExpandablePanel, Slider, ComboBox, \
                                         CheckBox, ToggleButton, Button, TextBox
+from horus.gui.util.resolutionWindow import ResolutionWindow
 
 from horus.util import profile
 
 from horus.engine.driver import Driver
 from horus.engine import scan, calibration
 
+
+class CameraSettingsPanel(ExpandablePanel):
+    def __init__(self, parent):
+        """"""
+        ExpandablePanel.__init__(self, parent, _("Camera Settings"))
+
+        self.driver = Driver.Instance()
+        self.main = self.GetParent().GetParent().GetParent().GetParent()
+        self.last_resolution = profile.getProfileSetting('resolution_calibration')
+
+        self.clearSections()
+        section = self.createSection('camera_calibration')
+        section.addItem(Slider, 'brightness_calibration', tooltip=_('Image luminosity. Low values are better for environments with high ambient light conditions. High values are recommended for poorly lit places'))
+        section.addItem(Slider, 'contrast_calibration', tooltip=_('Relative difference in intensity between an image point and its surroundings. Low values are recommended for black or very dark colored objects. High values are better for very light colored objects'))
+        section.addItem(Slider, 'saturation_calibration', tooltip=_('Purity of color. Low values will cause colors to disappear from the image. High values will show an image with very intense colors'))
+        section.addItem(Slider, 'exposure_calibration', tooltip=_('Amount of light per unit area. It is controlled by the time the camera sensor is exposed during a frame capture. High values are recommended for poorly lit places'))
+        section.addItem(ComboBox, 'framerate_calibration', tooltip=_('Number of frames captured by the camera every second. Maximum frame rate is recommended'))
+        section.addItem(ComboBox, 'resolution_calibration', tooltip=_('Size of the video. Maximum resolution is recommended'))
+        section.addItem(CheckBox, 'use_distortion_calibration', tooltip=_("This option applies lens distortion correction to the video. This process slows the video feed from the camera"))
+
+    def updateCallbacks(self):
+        section = self.sections['camera_calibration']
+        section.updateCallback('brightness_calibration', self.driver.camera.setBrightness)
+        section.updateCallback('contrast_calibration', self.driver.camera.setContrast)
+        section.updateCallback('saturation_calibration', self.driver.camera.setSaturation)
+        section.updateCallback('exposure_calibration', self.driver.camera.setExposure)
+        section.updateCallback('framerate_calibration', lambda v: self.driver.camera.setFrameRate(int(v)))
+        section.updateCallback('resolution_calibration', lambda v: self.setResolution(v))
+        section.updateCallback('use_distortion_calibration', lambda v: self.driver.camera.setUseDistortion(v))
+
+    def setResolution(self, value):
+        if value != self.last_resolution:
+            ResolutionWindow(self)
+        self.driver.camera.setResolution(int(value.split('x')[0]), int(value.split('x')[1]))
+        self.last_resolution = profile.getProfileSetting('resolution_calibration')
+
+
 class PatternSettingsPanel(ExpandablePanel):
     def __init__(self, parent):
         """"""
-        ExpandablePanel.__init__(self, parent, _("Pattern Settings"))
+        ExpandablePanel.__init__(self, parent, _("Pattern Settings"), hasUndo=False)
 
         self.cameraIntrinsics = calibration.CameraIntrinsics.Instance()
         self.simpleLaserTriangulation = calibration.SimpleLaserTriangulation.Instance()
         self.laserTriangulation = calibration.LaserTriangulation.Instance()
         self.platformExtrinsics = calibration.PlatformExtrinsics.Instance()
 
-        self.initialize()
-
-    def initialize(self):
         self.clearSections()
         section = self.createSection('pattern_settings')
-        section.addItem(TextBox, 'square_width', lambda v: self.updatePatternParameters())
-        section.addItem(TextBox, 'pattern_rows', lambda v: self.updatePatternParameters())
-        section.addItem(TextBox, 'pattern_columns', lambda v: self.updatePatternParameters())
-        section.addItem(TextBox, 'pattern_distance', lambda v: self.updatePatternParameters(), tooltip=_('Distance between the upper edge of the chess row closer to the platform and the platform.'))
+        section.addItem(TextBox, 'square_width')
+        section.addItem(TextBox, 'pattern_rows', tooltip=_('Number of corner rows in the pattern'))
+        section.addItem(TextBox, 'pattern_columns', tooltip=_('Number of corner columns in the pattern'))
+        section.addItem(TextBox, 'pattern_distance', tooltip=_("Minimum distance between the origin of the pattern (bottom-left corner) and the pattern's base surface"))
+
+    def updateCallbacks(self):
+        section = self.sections['pattern_settings']
+        section.updateCallback('square_width', lambda v: self.updatePatternParameters())
+        section.updateCallback('pattern_rows', lambda v: self.updatePatternParameters())
+        section.updateCallback('pattern_columns', lambda v: self.updatePatternParameters())
+        section.updateCallback('pattern_distance', lambda v: self.updatePatternParameters())
 
     def updatePatternParameters(self):
         self.cameraIntrinsics.setPatternParameters(profile.getProfileSettingInteger('pattern_rows'),
@@ -78,43 +120,26 @@ class PatternSettingsPanel(ExpandablePanel):
                                                      profile.getProfileSettingInteger('square_width'),
                                                      profile.getProfileSettingFloat('pattern_distance'))
 
-class CameraSettingsPanel(ExpandablePanel):
-    def __init__(self, parent):
-        """"""
-        ExpandablePanel.__init__(self, parent, _("Camera Settings"))
-
-        self.driver = Driver.Instance()
-        self.main = self.GetParent().GetParent().GetParent().GetParent()
-
-        self.initialize()
-
-    def initialize(self):
-        self.clearSections()
-        section = self.createSection('camera_settings')
-        section.addItem(Slider, 'brightness_calibration', self.driver.camera.setBrightness)
-        section.addItem(Slider, 'contrast_calibration', self.driver.camera.setContrast)
-        section.addItem(Slider, 'saturation_calibration', self.driver.camera.setSaturation)
-        section.addItem(Slider, 'exposure_calibration', self.driver.camera.setExposure)
-        section.addItem(ComboBox, 'framerate_calibration', lambda v: self.driver.camera.setFrameRate(int(v)))
-        section.addItem(ComboBox, 'resolution_calibration', lambda v: self.driver.camera.setResolution(int(v.split('x')[0]), int(v.split('x')[1])))
-        section.addItem(CheckBox, 'use_distortion_calibration', self.driver.camera.setUseDistortion, tooltip=_("Use the distortion vector to remove the distortion caused by the camera from the image. This process slows the video feed from the camera."))
 
 class LaserSettingsPanel(ExpandablePanel):
     def __init__(self, parent):
         """"""
-        ExpandablePanel.__init__(self, parent, _("Laser Settings"))
+        ExpandablePanel.__init__(self, parent, _("Laser Settings"), hasUndo=False, hasRestore=False)
 
         self.driver = Driver.Instance()
         self.laserTriangulation = calibration.LaserTriangulation.Instance()
 
-        self.initialize()
-
-    def initialize(self):
         self.clearSections()
         section = self.createSection('laser_settings')
-        # section.addItem(Slider, 'laser_threshold_value', self.laserTriangulation.setThreshold, tooltip=_("Value that determines wich pixels belong to the laser and which to the rest of the image. A low value may cause noise errors on the final scanned model, and a high value may reduce its accuracy."))
-        section.addItem(ToggleButton, 'left_button', (self.driver.board.setLeftLaserOn, self.driver.board.setLeftLaserOff))
-        section.addItem(ToggleButton, 'right_button', (self.driver.board.setRightLaserOn, self.driver.board.setRightLaserOff))
+        # section.addItem(Slider, 'laser_threshold_value', self.laserTriangulation.setThreshold)
+        section.addItem(ToggleButton, 'left_button')
+        section.addItem(ToggleButton, 'right_button')
+
+    def updateCallbacks(self):
+        section = self.sections['laser_settings']
+        section.updateCallback('left_button', (self.driver.board.setLeftLaserOn, self.driver.board.setLeftLaserOff))
+        section.updateCallback('right_button', (self.driver.board.setRightLaserOn, self.driver.board.setRightLaserOff))
+
 
 ## TODO: Use TextBoxArray
 
@@ -124,11 +149,10 @@ class CalibrationPanel(ExpandablePanel):
         ExpandablePanel.__init__(self, parent, titleText, hasUndo=False, hasRestore=False)
 
         self.buttonStartCallback = buttonStartCallback
+        self.description = description
 
         self.parametersBox = wx.BoxSizer(wx.VERTICAL)
         self.buttonsPanel = wx.Panel(self.content)
-        self.SetToolTip(wx.ToolTip(description))
-
 
         self.buttonEdit = wx.ToggleButton(self.buttonsPanel, wx.NewId(), label=_("Edit"))
         self.buttonEdit.SetMinSize((0,-1))
@@ -136,6 +160,7 @@ class CalibrationPanel(ExpandablePanel):
         self.buttonDefault.SetMinSize((0,-1))
         self.buttonStart = wx.Button(self.buttonsPanel, wx.NewId(), label=_("Start"))
         self.buttonStart.SetMinSize((0,-1))
+        self.buttonStart.SetToolTip(wx.ToolTip(description))
 
         self.contentBox.Add(self.parametersBox, 1, wx.TOP|wx.BOTTOM|wx.EXPAND, 5)
         self.hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -166,7 +191,7 @@ class CameraIntrinsicsPanel(CalibrationPanel):
 
     def __init__(self, parent, buttonStartCallback):
         CalibrationPanel.__init__(self, parent, titleText=_("Camera Intrinsics"), buttonStartCallback=buttonStartCallback,
-                                  description=_("Determines the camera matrix and the distortion coefficients using Zhang2000 algorithm and pinhole camera model."))
+                                  description=_("This calibration acquires the camera intrinsic parameters (focal lenghts and optical centers) and the lens distortion"))
 
         self.driver = Driver.Instance()
         self.pcg = scan.PointCloudGenerator.Instance()
@@ -218,6 +243,11 @@ class CameraIntrinsicsPanel(CalibrationPanel):
        	self.parametersBox.Add(cameraPanel, 0, wx.ALL|wx.EXPAND, 2)
         self.parametersBox.Add(distortionText, 0, wx.ALL|wx.EXPAND, 8)
        	self.parametersBox.Add(distortionPanel, 0, wx.ALL|wx.EXPAND, 2)
+
+        cameraText.SetToolTip(wx.ToolTip(self.description))
+        cameraPanel.SetToolTip(wx.ToolTip(self.description))
+        distortionText.SetToolTip(wx.ToolTip(self.description))
+        distortionPanel.SetToolTip(wx.ToolTip(self.description))
 
         self.Layout()
 
@@ -313,7 +343,7 @@ class LaserTriangulationPanel(CalibrationPanel):
 
     def __init__(self, parent, buttonStartCallback):
         CalibrationPanel.__init__(self, parent, titleText=_("Laser Triangulation"), buttonStartCallback=buttonStartCallback,
-                                  description=_("Determines the planes of both line lasers: minimum distance and normal vector."))
+                                  description=_("This calibration determines the lasers' planes relative to the camera's coordinate system"))
 
         self.pcg = scan.PointCloudGenerator.Instance()
 
@@ -382,6 +412,13 @@ class LaserTriangulationPanel(CalibrationPanel):
         self.parametersBox.Add(laserRightText, 0, wx.ALL|wx.EXPAND, 8)
         self.parametersBox.Add(distanceRightPanel, 1, wx.ALL|wx.EXPAND, 2)
         self.parametersBox.Add(normalRightPanel, 0, wx.ALL|wx.EXPAND, 2)
+
+        laserLeftText.SetToolTip(wx.ToolTip(self.description))
+        distanceLeftPanel.SetToolTip(wx.ToolTip(self.description))
+        normalLeftPanel.SetToolTip(wx.ToolTip(self.description))
+        laserRightText.SetToolTip(wx.ToolTip(self.description))
+        distanceRightPanel.SetToolTip(wx.ToolTip(self.description))
+        normalRightPanel.SetToolTip(wx.ToolTip(self.description))
 
         self.Layout()
 
@@ -498,7 +535,7 @@ class SimpleLaserTriangulationPanel(CalibrationPanel):
     def __init__(self, parent, buttonStartCallback):
 
         CalibrationPanel.__init__(self, parent, titleText=_("Laser Simple Triangulation Calibration"), buttonStartCallback=buttonStartCallback,
-                                  description=_("Determines the depth of the intersection camera-laser considering the inclination of the lasers."))
+                                  description=_("This calibration determines the depth of the intersection camera-laser considering the inclination of the lasers"))
 
         self.pcg = scan.PointCloudGenerator.Instance()
 
@@ -566,6 +603,13 @@ class SimpleLaserTriangulationPanel(CalibrationPanel):
         self.parametersBox.Add(originPanel, 0, wx.ALL|wx.EXPAND, 2)
         self.parametersBox.Add(normalText, 0, wx.ALL|wx.EXPAND, 8)
         self.parametersBox.Add(normalPanel, 0, wx.ALL|wx.EXPAND, 2)
+
+        coordinatesText.SetToolTip(wx.ToolTip(self.description))
+        coordinatesPanel.SetToolTip(wx.ToolTip(self.description))
+        originText.SetToolTip(wx.ToolTip(self.description))
+        originPanel.SetToolTip(wx.ToolTip(self.description))
+        normalText.SetToolTip(wx.ToolTip(self.description))
+        normalPanel.SetToolTip(wx.ToolTip(self.description))
 
         self.Layout()
 
@@ -670,7 +714,7 @@ class PlatformExtrinsicsPanel(CalibrationPanel):
 
     def __init__(self, parent, buttonStartCallback):
         CalibrationPanel.__init__(self, parent, titleText=_("Platform Extrinsics"), buttonStartCallback=buttonStartCallback,
-                                  description=_("Determines the transformation matrix between the camera and the platform using a circular interpolation method."))
+                                  description=_("This calibration determines the position and orientation of the rotating platform relative to the camera's coordinate system"))
 
         self.pcg = scan.PointCloudGenerator.Instance()
 
@@ -720,6 +764,11 @@ class PlatformExtrinsicsPanel(CalibrationPanel):
         self.parametersBox.Add(rotationPanel, 0, wx.ALL|wx.EXPAND, 2)
         self.parametersBox.Add(translationText, 0, wx.ALL|wx.EXPAND, 8)
         self.parametersBox.Add(translationPanel, 0, wx.ALL|wx.EXPAND, 2)
+
+        rotationText.SetToolTip(wx.ToolTip(self.description))
+        rotationPanel.SetToolTip(wx.ToolTip(self.description))
+        translationText.SetToolTip(wx.ToolTip(self.description))
+        translationPanel.SetToolTip(wx.ToolTip(self.description))
 
         self.Layout
 

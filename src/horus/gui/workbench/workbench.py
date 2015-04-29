@@ -109,14 +109,12 @@ class WorkbenchConnection(Workbench):
 
 	def onDisconnectToolClicked(self, event):
 		self.driver.disconnect()
-		self.driver.board.setUnplugCallback(None)
-		self.driver.camera.setUnplugCallback(None)
-		self.updateStatus(False)
+		self.updateStatus(self.driver.isConnected)
 
 	def beforeConnect(self):
 		self.enableLabelTool(self.connectTool, False)
 		self.combo.Disable()
-		for i in range(self.GetParent().menuBar.GetMenuCount()):
+		for i in xrange(self.GetParent().menuBar.GetMenuCount()):
 			self.GetParent().menuBar.EnableTop(i, False)
 		self.driver.board.setUnplugCallback(None)
 		self.driver.camera.setUnplugCallback(None)
@@ -127,29 +125,29 @@ class WorkbenchConnection(Workbench):
 
 		if not ret:
 			if result is Error.WrongFirmware:
-				dlg = wx.MessageDialog(self, _("Board has a wrong firmware or an invalid Baud Rate.\nPlease select your Board and press Upload Firmware"), Error.str(result), wx.OK|wx.ICON_INFORMATION)
+				dlg = wx.MessageDialog(self, _("Board has a wrong firmware or an invalid Baud Rate.\nPlease select your Board and press Upload Firmware"), _(result), wx.OK|wx.ICON_INFORMATION)
 				dlg.ShowModal()
 				dlg.Destroy()
 				self.updateStatus(False)
 				self.GetParent().onPreferences(None)
 			elif result is Error.BoardNotConnected:
-				dlg = wx.MessageDialog(self, _("Board is not connected.\nPlease connect your board and select a valid Serial Name"), Error.str(result), wx.OK|wx.ICON_INFORMATION)
+				dlg = wx.MessageDialog(self, _("Board is not connected.\nPlease connect your board and select a valid Serial Name"), _(result), wx.OK|wx.ICON_INFORMATION)
 				dlg.ShowModal()
 				dlg.Destroy()
 				self.updateStatus(False)
 				self.GetParent().onPreferences(None)
 			elif result is Error.CameraNotConnected:
-				dlg = wx.MessageDialog(self, _("Please plug your camera and try to connect again"), Error.str(result), wx.OK|wx.ICON_ERROR)
+				dlg = wx.MessageDialog(self, _("Please plug your camera and try to connect again"), _(result), wx.OK|wx.ICON_ERROR)
 				dlg.ShowModal()
 				dlg.Destroy()
 			elif result is Error.WrongCamera:
-				dlg = wx.MessageDialog(self, _("You probably have selected a wrong camera.\nPlease select other Camera Id"), Error.str(result), wx.OK|wx.ICON_INFORMATION)
+				dlg = wx.MessageDialog(self, _("You probably have selected a wrong camera.\nPlease select other Camera Id"), _(result), wx.OK|wx.ICON_INFORMATION)
 				dlg.ShowModal()
 				dlg.Destroy()
 				self.updateStatus(False)
 				self.GetParent().onPreferences(None)
 			elif result is Error.InvalidVideo:
-				dlg = wx.MessageDialog(self, _("Unplug and plug your camera USB cable and try to connect again"), Error.str(result), wx.OK|wx.ICON_ERROR)
+				dlg = wx.MessageDialog(self, _("Unplug and plug your camera USB cable and try to connect again"), _(result), wx.OK|wx.ICON_ERROR)
 				dlg.ShowModal()
 				dlg.Destroy()
 
@@ -158,7 +156,7 @@ class WorkbenchConnection(Workbench):
 		
 		self.updateStatus(self.driver.isConnected)
 		self.combo.Enable()
-		for i in range(self.GetParent().menuBar.GetMenuCount()):
+		for i in xrange(self.GetParent().menuBar.GetMenuCount()):
 			self.GetParent().menuBar.EnableTop(i, True)
 		del self.waitCursor
 
@@ -175,6 +173,8 @@ class WorkbenchConnection(Workbench):
 		else:
 			self.enableLabelTool(self.connectTool   , True)
 			self.enableLabelTool(self.disconnectTool, False)
+			self.driver.board.setUnplugCallback(None)
+			self.driver.camera.setUnplugCallback(None)
 
 	def updateToolbarStatus(self, status):
 		pass

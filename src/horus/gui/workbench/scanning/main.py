@@ -92,11 +92,19 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.splitterWindow = wx.SplitterWindow(self._panel)
 
 		self.videoView = VideoView(self.splitterWindow, self.getFrame, 10)
-		self.sceneView = SceneView(self.splitterWindow)
 		self.videoView.SetBackgroundColour(wx.BLACK)
-		self.sceneView.SetBackgroundColour(wx.BLACK)
 
-		self.splitterWindow.SplitVertically(self.videoView, self.sceneView)
+		self.scenePanel = wx.Panel(self.splitterWindow)
+		self.sceneView = SceneView(self.scenePanel)
+		self.gauge = wx.Gauge(self.scenePanel, size=(-1, 30))
+		self.gauge.Hide()
+
+		vbox = wx.BoxSizer(wx.VERTICAL)
+		vbox.Add(self.sceneView, 1, wx.ALL|wx.EXPAND, 0)
+		vbox.Add(self.gauge, 0, wx.ALL|wx.EXPAND, 0)
+		self.scenePanel.SetSizer(vbox)
+
+		self.splitterWindow.SplitVertically(self.videoView, self.scenePanel)
 		self.splitterWindow.SetMinimumPaneSize(200)
 
 		#-- Layout
@@ -109,32 +117,34 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.addToPanel(self.splitterWindow, 1)
 
 		#- Video View Selector
+		_choices = []
+		choices = profile.getProfileSettingObject('img_type').getType()
+		for i in choices:
+			_choices.append(_(i))
+		self.videoViewsDict = dict(zip(_choices, choices))
+
 		self.buttonShowVideoViews = wx.BitmapButton(self.videoView, wx.NewId(), wx.Bitmap(resources.getPathForImage("views.png"), wx.BITMAP_TYPE_ANY), (10,10))
-		self.comboVideoViews = wx.ComboBox(self.videoView, choices=[_("Laser"), _("Gray"), _("Line"), _("Color")], style=wx.CB_READONLY, pos=(60,10))
+		self.comboVideoViews = wx.ComboBox(self.videoView, value=_(profile.getProfileSetting('img_type')), choices=_choices, style=wx.CB_READONLY, pos=(60,10))
 
 		self.buttonShowVideoViews.Hide()
 		self.comboVideoViews.Hide()
 
-		selectedView = {'laser' : _("Laser"),
-						'gray'  : _("Gray"),
-						'line'  : _("Line"),
-						'color' : _("Color")}
-
-		self.comboVideoViews.SetValue(selectedView[profile.getProfileSetting('img_type')])
-
 		self.buttonShowVideoViews.Bind(wx.EVT_BUTTON, self.onShowVideoViews)
 		self.comboVideoViews.Bind(wx.EVT_COMBOBOX, self.onComboBoVideoViewsSelect)
 
+		self.updateCallbacks()
 		self.Layout()
 
-	def initialize(self):
-		self.controls.initialize()
+	def updateCallbacks(self):
+		self.controls.updateCallbacks()
+
+	def enableRestore(self, value):
+		self.controls.enableRestore(value)
 
 	def onShow(self, event):
 		if event.GetShow():
 			self.updateStatus(self.currentScan.driver.isConnected)
 			self.pointCloudTimer.Stop()
-			self.pointCloudTimer.Start(milliseconds=50)
 		else:
 			try:
 				self.pointCloudTimer.Stop()
@@ -150,13 +160,9 @@ class ScanningWorkbench(WorkbenchConnection):
 			self.comboVideoViews.Hide()
 
 	def onComboBoVideoViewsSelect(self, event):
-		selectedView = {_("Laser") : 'laser',
-						_("Gray")  : 'gray',
-						_("Line")  : 'line',
-						_("Color") : 'color'}.get(self.comboVideoViews.GetValue())
-
-		self.currentScan.setImageType(selectedView)
-		profile.putProfileSetting('img_type', selectedView)
+		value = self.videoViewsDict[self.comboVideoViews.GetValue()]
+		self.currentScan.setImageType(value)
+		profile.putProfileSetting('img_type', value)
 
 	def getFrame(self):
 		if self.scanning:
@@ -186,14 +192,15 @@ class ScanningWorkbench(WorkbenchConnection):
 				dlg.Destroy()
 			if result:
 				value = profile.getProfileSetting('scan_type')
-				print value
-				if value == _("Without Texture"):
+				if value == 'Simple Scan':
 					self.currentScan = self.simpleScan
-					self.driver.camera.setExposure(profile.getProfileSettingInteger('laser_exposure_scanning'))
-				elif value == _("With Texture"):
+				elif value == 'Texture Scan':
 					self.currentScan = self.textureScan
-					self.driver.camera.setExposure(profile.getProfileSettingInteger('color_exposure_scanning'))
-				self.currentScan.setCallbacks(self.beforeScan, None, lambda r: wx.CallAfter(self.afterScan,r))
+				self.gauge.SetValue(0)
+				self.gauge.Show()
+				self.scenePanel.Layout()
+				self.Layout()
+				self.currentScan.setCallbacks(self.beforeScan, self.progressScan, lambda r: wx.CallAfter(self.afterScan,r))
 				self.currentScan.start()
 
 	def beforeScan(self):
@@ -204,6 +211,7 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.enableLabelTool(self.stopTool, True)
 		self.enableLabelTool(self.pauseTool , True)
 		self.sceneView.createDefaultObject()
+		self.sceneView.setShowDeleteMenu(False)
 		self.videoView.setMilliseconds(200)
 		self.combo.Disable()
 		self.GetParent().menuFile.Enable(self.GetParent().menuLaunchWizard.GetId(), False)
@@ -213,7 +221,27 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.GetParent().menuFile.Enable(self.GetParent().menuOpenProfile.GetId(), False)
 		self.GetParent().menuFile.Enable(self.GetParent().menuSaveProfile.GetId(), False)
 		self.GetParent().menuFile.Enable(self.GetParent().menuResetProfile.GetId(), False)
+		self.GetParent().menuFile.Enable(self.GetParent().menuExit.GetId(), False)
+		self.GetParent().menuEdit.Enable(self.GetParent().menuPreferences.GetId(), False)
+		self.GetParent().menuHelp.Enable(self.GetParent().menuWelcome.GetId(), False)
+		panel = self.controls.panels['scan_parameters']
+		section = panel.sections['scan_parameters']
+		section.disable('scan_type')
+		section.disable('use_laser')
+		panel = self.controls.panels['rotative_platform']
+		section = panel.sections['motor_scanning']
+		section.disable('feed_rate_scanning')
+		section.disable('acceleration_scanning')
+		panel = self.controls.panels['image_acquisition']
+		section = panel.sections['camera_scanning']
+		section.disable('framerate_scanning')
+		section.disable('resolution_scanning')
+		self.enableRestore(False)
 		self.pointCloudTimer.Start(milliseconds=50)
+
+	def progressScan(self, progress, range=100):
+		self.gauge.SetRange(range)
+		self.gauge.SetValue(progress)
 
 	def afterScan(self, response):
 		ret, result = response
@@ -246,8 +274,7 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.enableLabelTool(self.playTool, True)
 		self.enableLabelTool(self.stopTool, False)
 		self.enableLabelTool(self.pauseTool , False)
-		self.driver.camera.setExposure(profile.getProfileSettingInteger('exposure_scanning'))
-		self.videoView.setMilliseconds(5)
+		self.sceneView.setShowDeleteMenu(True)
 		self.combo.Enable()
 		self.GetParent().menuFile.Enable(self.GetParent().menuLaunchWizard.GetId(), True)
 		self.GetParent().menuFile.Enable(self.GetParent().menuLoadModel.GetId(), True)
@@ -256,7 +283,27 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.GetParent().menuFile.Enable(self.GetParent().menuOpenProfile.GetId(), True)
 		self.GetParent().menuFile.Enable(self.GetParent().menuSaveProfile.GetId(), True)
 		self.GetParent().menuFile.Enable(self.GetParent().menuResetProfile.GetId(), True)
+		self.GetParent().menuFile.Enable(self.GetParent().menuExit.GetId(), True)
+		self.GetParent().menuEdit.Enable(self.GetParent().menuPreferences.GetId(), True)
+		self.GetParent().menuHelp.Enable(self.GetParent().menuWelcome.GetId(), True)
+		panel = self.controls.panels['scan_parameters']
+		section = panel.sections['scan_parameters']
+		section.enable('scan_type')
+		section.enable('use_laser')
+		panel = self.controls.panels['rotative_platform']
+		section = panel.sections['motor_scanning']
+		section.enable('feed_rate_scanning')
+		section.enable('acceleration_scanning')
+		panel = self.controls.panels['image_acquisition']
+		section = panel.sections['camera_scanning']
+		section.enable('framerate_scanning')
+		section.enable('resolution_scanning')
+		self.enableRestore(True)
 		self.pointCloudTimer.Stop()
+		self.videoView.setMilliseconds(10)
+		self.gauge.Hide()
+		self.scenePanel.Layout()
+		self.Layout()
 
 	def onPauseToolClicked(self, event):
 		self.enableLabelTool(self.pauseTool , False)
@@ -281,4 +328,3 @@ class ScanningWorkbench(WorkbenchConnection):
 
 	def updateProfileToAllControls(self):
 		self.controls.updateProfile()
-		self.driver.camera.setExposure(profile.getProfileSettingInteger('exposure_scanning'))

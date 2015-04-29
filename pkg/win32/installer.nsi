@@ -76,9 +76,12 @@ Section "Horus ${VERSION}"
   
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
-  
+
   ; Put file there
   File /r "dist\"
+
+  ; Remove ini files version
+  Delete "$INSTDIR\src\horus\*.ini"
   
   ; Write the installation path into the registry
   WriteRegStr HKLM "SOFTWARE\Horus_${VERSION}" "Install_Dir" "$INSTDIR"
@@ -156,9 +159,9 @@ Section "Uninstall"
 
   ; Write start menu entries for all users
   SetShellVarContext all
+
   ; Remove directories used
   RMDir /r "$SMPROGRAMS\Horus ${VERSION}"
   RMDir /r "$INSTDIR"
 
 SectionEnd
-

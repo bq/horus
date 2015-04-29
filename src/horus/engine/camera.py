@@ -65,6 +65,7 @@ class Camera:
 
 		self.reading = False
 
+		self.framerate = 30
 		self.width = 800
 		self.height = 600
 		self.useDistortion = False
@@ -164,7 +165,7 @@ class Camera:
 		if self.isConnected:
 			self.reading = True
 			if flush:
-				for i in range(0, flushValue):
+				for i in xrange(0, flushValue):
 					self.getImage()
 
 			(ret,image) = self.getImage()
@@ -199,7 +200,7 @@ class Camera:
 
 	def _fail(self):
 		self._n += 1
-		if self._n >= 1:
+		if self._n >= 3:
 			self._n = 0
 			if self.unplugCallback is not None and \
 			   self.parent is not None and not self.parent.unplugged:
@@ -252,10 +253,12 @@ class Camera:
 
 	def setFrameRate(self, value):
 		if self.isConnected:
-			if platform.system() == 'Darwin':
-				self.capture.set_fps(value)
-			else:
-				self.capture.set(cv2.cv.CV_CAP_PROP_FPS, value)
+			#-- If same FPS value is sent -> 16 Mb OpenCV Memory leak! --#
+			if value is not self.framerate: 
+				if platform.system() == 'Darwin':
+					self.capture.set_fps(value)
+				else:
+					self.capture.set(cv2.cv.CV_CAP_PROP_FPS, value)
 
 	def _setWidth(self, value):
 		if self.isConnected:

@@ -16,6 +16,8 @@ EXTRA_ARGS=${2}
 
 ##Which version name are we appending to the final archive
 VERSION=`head -1 pkg/linux/debian/changelog | grep -o '[0-9.]*' | head -1`
+BQ_VERSION=`head -1 pkg/linux/debian/changelog | grep -o '[0-9.]*' | tail -1`
+VEXT=${VEXT:=""}
 TARGET_DIR=Horus-${VERSION}-${BUILD_TARGET}
 
 ##Which versions of external programs to use
@@ -50,12 +52,22 @@ function downloadURL
 
 function extract
 {
-	echo "Extracting $*"
-	echo "7z x -y $*" >> log.txt
-	7z x -y $* >> log.txt
-	if [ $? != 0 ]; then
-        echo "Failed to extract $*"
-        exit 1
+	if [ $1 != ${1%%.exe} ] || [ $1 != ${1%%.zip} ] || [ $1 != ${1%%.msi} ]; then
+		echo "Extracting $*"
+		echo "7z x -y $*" >> log.txt
+		7z x -y $* >> log.txt
+		if [ $? != 0 ]; then
+			echo "Failed to extract $*"
+			exit 1
+		fi
+	elif [ $1 != ${1%%.tar.gz} ]; then
+		echo "Extracting $*"
+		echo "tar -zxvf $*" >> log.txt
+		tar -zxvf $* >> log.txt
+		if [ $? != 0 ]; then
+			echo "Failed to extract $*"
+			exit 1
+		fi
 	fi
 }
 
@@ -131,15 +143,18 @@ if [ $BUILD_TARGET = "debian" ]; then
 		elif [ $EXTRA_ARGS = "-u" ]; then
 			# Upload to launchpad
 			debuild -S -sa
-			PPA=ppa:jesus-arroyo/horus
+			PPA=${PPA:="ppa:jesus-arroyo/horus"}
 			RELEASES="trusty utopic"
 			ORIG_RELEASE=`head -1 pkg/linux/debian/changelog | sed 's/.*) \(.*\);.*/\1/'`
+			cd .. ; mv horus-${VERSION} horus-${VERSION}${VEXT}
+			mv horus_${VERSION}.orig.tar.gz horus_${VERSION}${VEXT}.orig.tar.gz
+			cd horus-${VERSION}${VEXT}
 			for RELEASE in $RELEASES ;
 			do
 			  cp debian/changelog debian/changelog.backup
-			  sed -i "s/${ORIG_RELEASE}/${RELEASE}/;s/bq1/bq1~${RELEASE}1/" debian/changelog
+			  sed -i "s/${ORIG_RELEASE}/${RELEASE}/;s/${VERSION}/${VERSION}${VEXT}/;s/bq${BQ_VERSION}/bq${BQ_VERSION}~${RELEASE}1/" debian/changelog
 			  debuild -S -sa
-			  dput -f ${PPA} ../horus_${VERSION}-bq1~${RELEASE}1_source.changes
+			  dput -f ${PPA} ../horus_${VERSION}${VEXT}-bq${BQ_VERSION}~${RELEASE}1_source.changes
 			  mv debian/changelog.backup debian/changelog
 			done
 		fi
@@ -170,11 +185,12 @@ if [ $BUILD_TARGET = "win32" ]; then
 	downloadURL http://sourceforge.net/projects/pyserial/files/pyserial/2.7/pyserial-2.7.win32.exe
 	downloadURL http://sourceforge.net/projects/comtypes/files/comtypes/0.6.2/comtypes-0.6.2.win32.exe
 	downloadURL http://sourceforge.net/projects/pyopengl/files/PyOpenGL/3.0.1/PyOpenGL-3.0.1.win32.exe
-	downloadURL https://pypi.python.org/packages/any/p/pyparsing/pyparsing-2.0.1.win32-py2.7.exe
+	downloadURL http://pypi.python.org/packages/any/p/pyparsing/pyparsing-2.0.1.win32-py2.7.exe
 	downloadURL http://sourceforge.net/projects/numpy/files/NumPy/1.8.1/numpy-1.8.1-win32-superpack-python2.7.exe
 	downloadURL http://sourceforge.net/projects/opencvlibrary/files/opencv-win/2.4.9/opencv-2.4.9.exe
-	downloadURL https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.3.0/matplotlib-1.3.0.win32-py2.7.exe
+	downloadURL http://sourceforge.net/projects/matplotlib/files/matplotlib/matplotlib-1.4.0/matplotlib-1.4.0.win32-py2.7.exe
 	downloadURL http://sourceforge.net/projects/scipy/files/scipy/0.14.0/scipy-0.14.0-win32-superpack-python2.7.exe
+	downloadURL https://pypi.python.org/packages/source/s/six/six-1.9.0.tar.gz
 	downloadURL http://videocapture.sourceforge.net/VideoCapture-0.9-5.zip
 	mkdir -p pyglet; cd pyglet;
 	downloadURL http://pyglet.googlecode.com/files/pyglet-1.1.4.msi; cd .. 
@@ -202,7 +218,8 @@ if [ $BUILD_TARGET = "win32" ]; then
 	extract numpy-1.8.1-sse2.exe PLATLIB
 	extract scipy-0.14.0-win32-superpack-python2.7.exe scipy-0.14.0-sse2.exe
 	extract scipy-0.14.0-sse2.exe PLATLIB
-	extract matplotlib-1.3.0.win32-py2.7.exe PLATLIB
+	extract matplotlib-1.4.0.win32-py2.7.exe PLATLIB
+	extract six-1.9.0.tar.gz six-1.9.0/six.py
 	extract opencv-2.4.9.exe opencv/build/python/2.7/x86/cv2.pyd
 	extract VideoCapture-0.9-5.zip VideoCapture-0.9-5/Python27/DLLs/vidcap.pyd
 	cd pyglet; extract pyglet-1.1.4.msi; cd ..
@@ -220,6 +237,7 @@ if [ $BUILD_TARGET = "win32" ]; then
 	mv PLATLIB/matplotlib ${TARGET_DIR}/python/Lib
 	touch PLATLIB/mpl_toolkits/__init__.py
 	mv PLATLIB/mpl_toolkits ${TARGET_DIR}/python/Lib
+	mv six-1.9.0/six.py ${TARGET_DIR}/python/Lib
 	mv opencv/build/python/2.7/x86/cv2.pyd ${TARGET_DIR}/python/DLLs
 	mv VideoCapture-0.9-5/Python27/DLLs/vidcap.pyd ${TARGET_DIR}/python/DLLs
 	mv pyglet ${TARGET_DIR}/python/Lib
@@ -228,6 +246,7 @@ if [ $BUILD_TARGET = "win32" ]; then
 	rm -rf opencv
 	rm -rf PURELIB
 	rm -rf PLATLIB
+	rm -rf six-1.9.0
 	rm -rf VideoCapture-0.9-5
 	rm -rf Win32
 	rm -rf pyglet
@@ -248,8 +267,6 @@ if [ $BUILD_TARGET = "win32" ]; then
 	cp -a ../doc/* ${TARGET_DIR}/doc
 	cp -a ../res/* ${TARGET_DIR}/res
 	cp -a ../src/* ${TARGET_DIR}/src
-	#Add horus version file
-	echo $VERSION > ${TARGET_DIR}/version
 
 	# Add script files
 	cp -a ../pkg/${BUILD_TARGET}/*.bat $TARGET_DIR/
@@ -257,8 +274,8 @@ if [ $BUILD_TARGET = "win32" ]; then
 	# Package the result
 	rm -rf ../pkg/win32/dist
 	ln -sf `pwd`/${TARGET_DIR} ../pkg/win32/dist
-	makensis -DVERSION=${VERSION} ../pkg/win32/installer.nsi
+	makensis -DVERSION=${VERSION}${VEXT} ../pkg/win32/installer.nsi
 	if [ $? != 0 ]; then echo "Failed to package NSIS installer"; exit 1; fi
-	mv ../pkg/win32/Horus_${VERSION}.exe .
+	mv ../pkg/win32/Horus_${VERSION}${VEXT}.exe .
 	rm -rf ../pkg/win32/dist
 fi

@@ -124,10 +124,11 @@ class CalibrationWorkbench(WorkbenchConnection):
         self.addToPanel(self.platformExtrinsicsMainPage, 1)
         self.addToPanel(self.platformExtrinsicsResultPage, 1)
 
+        self.updateCallbacks()
         self.Layout()
 
-    def initialize(self):
-        self.controls.initialize()
+    def updateCallbacks(self):
+        self.controls.updateCallbacks()
 
     def getFrame(self):
         frame = Driver.Instance().camera.captureImage()
@@ -136,12 +137,24 @@ class CalibrationWorkbench(WorkbenchConnection):
             retval, frame = self.cameraIntrinsics.detectChessboard(frame)
         return frame
 
+    def enableMenus(self, value):
+        main = self.GetParent()
+        main.menuFile.Enable(main.menuLaunchWizard.GetId(), value)
+        main.menuFile.Enable(main.menuOpenProfile.GetId(), value)
+        main.menuFile.Enable(main.menuSaveProfile.GetId(), value)
+        main.menuFile.Enable(main.menuResetProfile.GetId(), value)
+        main.menuFile.Enable(main.menuExit.GetId(), value)
+        main.menuEdit.Enable(main.menuPreferences.GetId(), value)
+        main.menuHelp.Enable(main.menuWelcome.GetId(), value)
+        main.Layout()
+
     def onCameraIntrinsicsStartCallback(self):
         self.calibrating = True
         self.enableLabelTool(self.disconnectTool, False)
         self.controls.setExpandable(False)
         self.controls.panels['camera_intrinsics_panel'].buttonsPanel.Disable()
         self.combo.Disable()
+        self.enableMenus(False)
         self.videoView.stop()
         self.videoView.Hide()
         self.cameraIntrinsicsMainPage.Show()
@@ -154,6 +167,7 @@ class CalibrationWorkbench(WorkbenchConnection):
         self.controls.setExpandable(False)
         self.controls.panels['laser_triangulation_panel'].buttonsPanel.Disable()
         self.combo.Disable()
+        self.enableMenus(False)
         self.videoView.stop()
         self.videoView.Hide()
         self.laserTriangulationMainPage.Show()
@@ -161,7 +175,7 @@ class CalibrationWorkbench(WorkbenchConnection):
 
     def onPlatformExtrinsicsStartCallback(self):
         if profile.getProfileSettingFloat('pattern_distance') == 0:
-            a=PatternDistanceWindow(self)
+            PatternDistanceWindow(self)
             self.updateProfileToAllControls()
         else:
             self.calibrating = True
@@ -169,6 +183,7 @@ class CalibrationWorkbench(WorkbenchConnection):
             self.controls.setExpandable(False)
             self.controls.panels['platform_extrinsics_panel'].buttonsPanel.Disable()
             self.combo.Disable()
+            self.enableMenus(False)
             self.videoView.stop()
             self.videoView.Hide()
             self.platformExtrinsicsMainPage.Show()
@@ -183,6 +198,7 @@ class CalibrationWorkbench(WorkbenchConnection):
         self.controls.panels['platform_extrinsics_panel'].buttonsPanel.Enable()
         self.controls.updateProfile()
         self.combo.Enable()
+        self.enableMenus(True)
         self.cameraIntrinsicsMainPage.Hide()
         self.cameraIntrinsicsResultPage.Hide()
         self.laserTriangulationMainPage.Hide()
@@ -210,6 +226,7 @@ class CalibrationWorkbench(WorkbenchConnection):
         self.controls.panels['camera_intrinsics_panel'].buttonsPanel.Enable()
         self.controls.panels['camera_intrinsics_panel'].updateAllControlsToProfile()
         self.combo.Enable()
+        self.enableMenus(True)
         self.cameraIntrinsicsResultPage.Hide()
         self.videoView.Show()
         self.Layout()
@@ -231,6 +248,7 @@ class CalibrationWorkbench(WorkbenchConnection):
         self.controls.panels['laser_triangulation_panel'].buttonsPanel.Enable()
         self.controls.panels['laser_triangulation_panel'].updateAllControlsToProfile()
         self.combo.Enable()
+        self.enableMenus(True)
         self.laserTriangulationResultPage.Hide()
         self.videoView.Show()
         self.Layout()
@@ -252,6 +270,7 @@ class CalibrationWorkbench(WorkbenchConnection):
         self.controls.panels['platform_extrinsics_panel'].buttonsPanel.Enable()
         self.controls.panels['platform_extrinsics_panel'].updateAllControlsToProfile()
         self.combo.Enable()
+        self.enableMenus(True)
         self.platformExtrinsicsResultPage.Hide()
         self.videoView.Show()
         self.Layout()

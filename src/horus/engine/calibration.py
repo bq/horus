@@ -203,6 +203,9 @@ class LaserTriangulation(Calibration):
 	def getImage(self):
 		return self.image
 
+	def setImage(self, image):
+		self.image = image
+
 	def _start(self, progressCallback, afterCallback):
 		XL = None
 		XR = None
@@ -240,7 +243,7 @@ class LaserTriangulation(Calibration):
 
 				angle += step
 
-				camera.setExposure(profile.getProfileSettingNumpy('exposure_scanning'))
+				camera.setExposure(profile.getProfileSettingNumpy('exposure_calibration'))
 
 				#-- Image acquisition
 				imageRaw = camera.captureImage(flush=True, flushValue=flush)
@@ -253,7 +256,7 @@ class LaserTriangulation(Calibration):
 
 					d, n, corners = ret
 
-					camera.setExposure(profile.getProfileSettingNumpy('exposure_scanning')/2.)
+					camera.setExposure(profile.getProfileSettingNumpy('exposure_calibration')/2.)
 			
 					#-- Image laser acquisition
 					imageRawLeft = camera.captureImage(flush=True, flushValue=flush)
@@ -319,7 +322,7 @@ class LaserTriangulation(Calibration):
 		board.disableMotor()
 
 		#-- Restore camera exposure
-		camera.setExposure(profile.getProfileSettingNumpy('exposure_scanning'))
+		camera.setExposure(profile.getProfileSettingNumpy('exposure_calibration'))
 
 		if self.isCalibrating and nL is not None and nR is not None:
 			response = (True, ((dL, nL, stdL), (dR, nR, stdR)))
@@ -330,6 +333,8 @@ class LaserTriangulation(Calibration):
 				response = (False, Error.CalibrationError)
 			else:
 				response = (False, Error.CalibrationCanceled)
+
+		self.image = None
 
 		if afterCallback is not None:
 			afterCallback(response)
@@ -384,7 +389,7 @@ class LaserTriangulation(Calibration):
 			if n > 3:
 				final_points=[]
 
-				for trials in range(30):
+				for trials in xrange(30):
 					X=np.matrix(X)
 					n=X.shape[1]
 
@@ -407,7 +412,7 @@ class LaserTriangulation(Calibration):
 					std = distance_vector.std()
 
 					final_points=np.where(abs(distance_vector)<abs(2*std) )[0]
-					print 'iteration ', trials, 'd,n,std, len(final_points)', d,n,std, len(final_points)
+					#print 'iteration ', trials, 'd,n,std, len(final_points)', d,n,std, len(final_points)
 
 					X=X[:, final_points]
 
@@ -571,6 +576,8 @@ class SimpleLaserTriangulation(Calibration):
 			else:
 				response = (False, Error.CalibrationCanceled)
 
+		self.image = None
+
 		if afterCallback is not None:
 			afterCallback(response)
 
@@ -723,6 +730,9 @@ class PlatformExtrinsics(Calibration):
 	def setPatternDistance(self, distance):
 		self.patternDistance=distance
 
+	def setImage(self, image):
+		self.image=image
+
 	def setPatternParameters(self, rows, columns, squareWidth, distance):
 		# Pattern rows and columns are flipped due to the fact that the pattern is in landscape orientation
 		self.patternRows = columns
@@ -811,6 +821,8 @@ class PlatformExtrinsics(Calibration):
 				response = (False, Error.CalibrationError)
 			else:
 				response = (False, Error.CalibrationCanceled)
+
+		self.image = None
 
 		if afterCallback is not None:
 			afterCallback(response)
