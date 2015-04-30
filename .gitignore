@@ -20,3 +20,4 @@
 pkg/win32/dist*
 deb_dist/*
 win_dist/*
+test/*

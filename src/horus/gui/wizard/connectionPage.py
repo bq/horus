@@ -390,8 +390,10 @@ class SettingsWindow(wx.Dialog):
 
     def onOk(self, event):
         self.setPatternDistance(self.patternDistance)
+        self.EndModal(wx.ID_OK)
         self.Destroy()
 
     def onClose(self, event):
         self.setLuminosity(self.initLuminosity)
+        self.EndModal(wx.ID_OK)
         self.Destroy()

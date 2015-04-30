@@ -37,6 +37,9 @@ import platform
 import wx._core
 import webbrowser
 
+if platform.system() == "Darwin":
+    from horus.engine import uvc
+
 from horus.util import profile, resources, meshLoader
 
 from horus.gui.workbench.control.main import ControlWorkbench
@@ -468,7 +471,7 @@ See the GNU General Public License for more details. You should have
 received a copy of the GNU General Public License along with File Hunter;
 if not, write to the Free Software Foundation, Inc., 59 Temple Place,
 Suite 330, Boston, MA  02111-1307  USA""")
-        info.AddDeveloper(u'Jesús Arroyo, Irene Sanz')
+        info.AddDeveloper(u'Jesús Arroyo, Irene Sanz, Jorge Robles')
         info.AddDocWriter(u'Jesús Arroyo, Ángel Larrañaga')
         info.AddArtist(u'Jesús Arroyo, Nestor Toribio')
         info.AddTranslator(u'Jesús Arroyo, Irene Sanz, Alexandre Galode, Natasha da Silva')
@@ -711,7 +714,7 @@ Suite 330, Boston, MA  02111-1307  USA""")
             except:
                 return baselist
         else:
-            for device in ['/dev/ttyACM*', '/dev/ttyUSB*', "/dev/tty.usb*", "/dev/cu.*", "/dev/rfcomm*"]:
+            for device in ['/dev/ttyACM*', '/dev/ttyUSB*',  "/dev/tty.usb*", "/dev/tty.wchusb*", "/dev/cu.*", "/dev/rfcomm*"]:
                 baselist = baselist + glob.glob(device)
         return baselist
 
@@ -734,6 +737,9 @@ Suite 330, Boston, MA  02111-1307  USA""")
             count = self.countCameras()
             for i in xrange(count):
                 baselist.append(str(i))
+        elif os.sys.platform == 'darwin':
+            for device in uvc.Camera_List():
+                baselist.append(str(device.src_id))
         else:
             for device in ['/dev/video*']:
                 baselist = baselist + glob.glob(device)
