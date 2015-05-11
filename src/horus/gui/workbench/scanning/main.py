@@ -176,6 +176,9 @@ class ScanningWorkbench(WorkbenchConnection):
 			if pointCloud[0] is not None and pointCloud[1] is not None:
 				if len(pointCloud[0]) > 0:
 					self.sceneView.appendPointCloud(pointCloud[0], pointCloud[1])
+					
+		gaugeValue = self.currentScan.getCurrentProgress()
+		self.progressScan(gaugeValue)
 
 	def onPlayToolClicked(self, event):
 		if self.currentScan.inactive:
@@ -200,7 +203,7 @@ class ScanningWorkbench(WorkbenchConnection):
 				self.gauge.Show()
 				self.scenePanel.Layout()
 				self.Layout()
-				self.currentScan.setCallbacks(self.beforeScan, self.progressScan, lambda r: wx.CallAfter(self.afterScan,r))
+				self.currentScan.setCallbacks(self.beforeScan, None, lambda r: wx.CallAfter(self.afterScan,r))
 				self.currentScan.start()
 
 	def beforeScan(self):
@@ -240,15 +243,16 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.enableRestore(False)
 		self.pointCloudTimer.Start(milliseconds=50)
 
-	def progressScan(self, progress, range=100):
-		self.gauge.SetRange(range)
-		self.gauge.SetValue(progress)
+	def progressScan(self, progress):
+		self.gauge.SetRange(int(progress[1]))
+		self.gauge.SetValue(int(progress[0]))
 
 	def afterScan(self, response):
 		ret, result = response
 		if ret:
 			dlg = wx.MessageDialog(self, _("Scanning has finished. If you want to save your point cloud go to File > Save Model"), _("Scanning finished!"), wx.OK|wx.ICON_INFORMATION)
 			dlg.ShowModal()
+			dlg.EndModal(wx.ID_OK);
 			dlg.Destroy()
 			self.scanning = False
 			self.onScanFinished()
@@ -258,6 +262,7 @@ class ScanningWorkbench(WorkbenchConnection):
 		self.currentScan.pause()
 		dlg = wx.MessageDialog(self, _("Your current scanning will be stopped.\nDo you really want to do it?"), _("Stop Scanning"), wx.YES_NO | wx.ICON_QUESTION)
 		result = dlg.ShowModal() == wx.ID_YES
+		dlg.EndModal(wx.ID_YES);
 		dlg.Destroy()
 
 		if result:

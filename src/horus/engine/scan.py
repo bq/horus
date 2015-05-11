@@ -78,6 +78,8 @@ class Scan:
 
 		self.imagesQueue = Queue.Queue(100)
 		self.points3DQueue = Queue.Queue(1000)
+		
+		self.progress=(0,0)
 
 	def resetTheta(self):
 		self.theta = 0
@@ -230,14 +232,14 @@ class Scan:
 		""""""
 		ret = False
 
-		if progressCallback is not None:
-			progressCallback(0)
-
 		while self.runProcess:
 			if not self.inactive:
 				angle = abs(self.pcg.theta * 180.0 / np.pi)
-				if progressCallback is not None and abs(self.pcg.degrees) > 0:
-					progressCallback(abs(angle/self.pcg.degrees), abs(360.0/self.pcg.degrees))
+				
+				
+				if self.inactive==False and abs(self.pcg.degrees) > 0:
+					self.progress = (abs(angle/self.pcg.degrees), abs(360.0/self.pcg.degrees))
+					
 				if angle <= 360.0:
 					if not self.imagesQueue.empty():
 						imagesQueueItem = self.imagesQueue.get(timeout=0.1)
@@ -309,7 +311,12 @@ class Scan:
 			return pc
 		else:
 			return None
-
+	
+	def getCurrentProgress(self):
+		if self.inactive==True:
+			self.progress=(0,0)
+		
+		return self.progress
 
 @Singleton
 class SimpleScan(Scan):
