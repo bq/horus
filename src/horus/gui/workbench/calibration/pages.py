@@ -495,11 +495,19 @@ class LaserTriangulation3DPlot(wx.Panel):
 		fig = Figure(facecolor=(0.7490196,0.7490196,0.7490196,1), tight_layout=True)
 		self.canvas = FigureCanvasWxAgg(self, -1, fig)
 		self.canvas.SetExtraStyle(wx.EXPAND)
+		self.canvas_cid = self.canvas.mpl_connect('button_release_event', self.onClick)
 		self.ax = fig.gca(projection='3d', axisbg=(0.7490196,0.7490196,0.7490196,1))
 
 		self.Bind(wx.EVT_SIZE, self.onSize)
+		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.Layout()
-
+	
+	def onClose(self, event):
+		self.canvas.mpl_disconnect(self.canvas_cid )
+	
+	def onClick(self, event):
+		self.canvas.draw()
+	
 	def onSize(self,event):
 		self.canvas.SetClientSize(self.GetClientSize())
 		self.canvas.draw()
