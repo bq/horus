@@ -6,7 +6,7 @@
 #                                                                       #
 # Copyright (C) 2014-2015 Mundo Reader S.L.                             #
 #                                                                       #
-# Date: March, Octobrer 2014                                            #
+# Date: March, Octobrer 2014, May 2015                                  #
 # Author: Jesús Arroyo Torrens <jesus.arroyo@bq.com>                    #
 #                                                                       #
 # This program is free software: you can redistribute it and/or modify  #
@@ -103,55 +103,42 @@ class Camera:
 	def connect(self):
 		print ">>> Connecting camera {0}".format(self.cameraId)
 		self.isConnected = False
-		
 		if sys.isDarwin():
-			if self.capture is not None:
-				self.capture.close()
-			self.capture = uvc.autoCreateCapture(self.cameraId,(self.width,self.height))
-			if self.capture is not None:
-				print ">>> Done"
-				self.isConnected = True
-				self.checkVideo()
-				self.checkCamera()
-			else:
-				raise CameraNotConnected()
+			for device in uvc.mac.Camera_List():
+				if device.src_id == self.cameraId:
+					self.controls = uvc.mac.Controls(device.uId)
+		if self.capture is not None:
+			self.capture.release()
+		self.capture = cv2.VideoCapture(self.cameraId)
+		time.sleep(0.2)
+		if not self.capture.isOpened():
+			time.sleep(1)
+			self.capture.open(self.cameraId)
+		if self.capture.isOpened():
+			print ">>> Done"
+			self.isConnected = True
+			self.checkVideo()
+			self.checkCamera()
 		else:
-			if self.capture is not None:
-				self.capture.release()
-			self.capture = cv2.VideoCapture(self.cameraId)
-			time.sleep(0.2)
-			if not self.capture.isOpened():
-				time.sleep(1)
-				self.capture.open(self.cameraId)
-			if self.capture.isOpened():
-				print ">>> Done"
-				self.isConnected = True
-				self.checkVideo()
-				self.checkCamera()
-			else:
-				raise CameraNotConnected()
+			raise CameraNotConnected()
 		
 	def disconnect(self):
 		tries = 0
 		if self.isConnected:
 			print ">>> Disconnecting camera {0}".format(self.cameraId)
 			if self.capture is not None:
-				if sys.isDarwin():
-					self.capture.close();
+				if self.capture.isOpened():
 					self.isConnected = False
-				else:
-					if self.capture.isOpened():
-						self.isConnected = False
-						while tries < 10:
-							tries += 1
-							if not self.reading:
-								self.capture.release()
+					while tries < 10:
+						tries += 1
+						if not self.reading:
+							self.capture.release()
 				print ">>> Done"
 
 	def checkCamera(self):
 		""" Checks correct camera """
 		if sys.isDarwin():
-			self.capture.controls['UVCC_REQ_EXPOSURE_AUTOMODE'].set_val(1);
+			self.controls['UVCC_REQ_EXPOSURE_AUTOMODE'].set_val(1);
 		self.setExposure(2)
 		exposure = self.getExposure()
 		if exposure is not None:
@@ -170,8 +157,8 @@ class Camera:
 			self.reading = True
 			if flush:
 				for i in xrange(0, flushValue):
-					self.getImage()
-			(ret,image) = self.getImage()
+					self.capture.read()
+			ret, image = self.capture.read()
 			self.reading = False
 			if ret:
 				if self.useDistortion and \
@@ -210,8 +197,8 @@ class Camera:
 	def setBrightness(self, value):
 		if self.isConnected:
 			if sys.isDarwin():
-				ctl = self.capture.controls['UVCC_REQ_BRIGHTNESS_ABS']
-				ctl.set_val(int(uvc.map(value,0,self.maxBrightness,ctl.min, ctl.max)))
+				ctl = self.controls['UVCC_REQ_BRIGHTNESS_ABS']
+				ctl.set_val(self.line(value,0,self.maxBrightness,ctl.min,ctl.max))
 				
 			else:
 				value = int(value)/self.maxBrightness
@@ -220,8 +207,8 @@ class Camera:
 	def setContrast(self, value):
 		if self.isConnected:
 			if sys.isDarwin():
-				ctl = self.capture.controls['UVCC_REQ_CONTRAST_ABS']
-				ctl.set_val(int(uvc.map(value,0,self.maxContrast,ctl.min, ctl.max)))
+				ctl = self.controls['UVCC_REQ_CONTRAST_ABS']
+				ctl.set_val(self.line(value,0,self.maxContrast,ctl.min,ctl.max))
 			else:
 				value = int(value)/self.maxContrast
 				self.capture.set(cv2.cv.CV_CAP_PROP_CONTRAST, value)
@@ -229,8 +216,8 @@ class Camera:
 	def setSaturation(self, value):
 		if self.isConnected:
 			if sys.isDarwin():
-				ctl = self.capture.controls['UVCC_REQ_SATURATION_ABS']
-				ctl.set_val(int(uvc.map(value,0,self.maxSaturation,ctl.min, ctl.max)))
+				ctl = self.controls['UVCC_REQ_SATURATION_ABS']
+				ctl.set_val(self.line(value,0,self.maxSaturation,ctl.min,ctl.max))
 			else:
 				value = int(value)/self.maxSaturation
 				self.capture.set(cv2.cv.CV_CAP_PROP_SATURATION, value)
@@ -238,7 +225,7 @@ class Camera:
 	def setExposure(self, value):
 		if self.isConnected:
 			if sys.isDarwin():
-				ctl = self.capture.controls['UVCC_REQ_EXPOSURE_ABS']
+				ctl = self.controls['UVCC_REQ_EXPOSURE_ABS']
 				value = int(value * self.relExposure)
 				ctl.set_val(value)
 			elif sys.isWindows():
@@ -251,10 +238,7 @@ class Camera:
 
 	def setFrameRate(self, value):
 		if self.isConnected:
-			if sys.isDarwin():
-				self.capture.set_fps(value)
-			else:
-				self.capture.set(cv2.cv.CV_CAP_PROP_FPS, value)
+			self.capture.set(cv2.cv.CV_CAP_PROP_FPS, value)
 
 	def _setWidth(self, value):
 		if self.isConnected:
@@ -266,23 +250,14 @@ class Camera:
 
 	def _updateResolution(self):
 		if self.isConnected:
-			if sys.isDarwin():
-				(w,h)= self.capture.get_size()
-			else:
-				w = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
-				h = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
-				
-			self.width = w
-			self.height = h
+			self.width = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
+			self.height = int(self.capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
 
 	def setResolution(self, width, height):
 		if self.isConnected:
-			if sys.isDarwin():
-				self.capture.set_size((width,height))
-			else:
-				self._setWidth(width)
-				self._setHeight(height)
-		self._updateResolution()
+			self._setWidth(width)
+			self._setHeight(height)
+			self._updateResolution()
 
 	def setUseDistortion(self, value):
 		self.useDistortion = value
@@ -295,7 +270,7 @@ class Camera:
 	def getExposure(self):
 		if self.isConnected:
 			if sys.isDarwin():
-				ctl = self.capture.controls['UVCC_REQ_EXPOSURE_ABS']
+				ctl = self.controls['UVCC_REQ_EXPOSURE_ABS']
 				value = ctl.get_val()
 				value /= self.relExposure
 			elif sys.isWindows():
@@ -305,14 +280,10 @@ class Camera:
 				value = self.capture.get(cv2.cv.CV_CAP_PROP_EXPOSURE)
 				value *= self.maxExposure
 			return value
-		
-	def getImage(self):
-		if sys.isDarwin():
-			ret = self.capture.get_frame();
-			if ret is not None:
-				image = ret.img
-		else:
-			ret, image  = self.capture.read()
 			
-		return ret, image
-			
+	def line(self, value, imin, imax, omin, omax):
+		ret = 0
+		if omin is not None and omax is not None:
+			if (imax - imin) != 0:
+				ret = int((value - imin) * (omax - omin) / (imax - imin) + omin)
+		return ret

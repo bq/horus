@@ -28,6 +28,7 @@ __author__ = "Jesús Arroyo Torrens <jesus.arroyo@bq.com>"
 __license__ = "GNU General Public License v2 http://www.gnu.org/licenses/gpl.html"
 
 import wx._core
+import select
 import threading
 
 from horus.util import profile, resources, system as sys
@@ -203,7 +204,8 @@ class PreferencesDialog(wx.Dialog):
 		count = -50
 		while count < 100:
 			if proc:
-				try:
+				readx = select.select([proc.stderr.fileno()], [], [])[0]
+				if readx:
 					out = proc.stderr.read()
 					if 'not in sync' in out or 'Invalid' in out:
 						wx.CallAfter(self.wrongBoardMessage)
@@ -211,8 +213,8 @@ class PreferencesDialog(wx.Dialog):
 					count += out.count('#')
 					if count >= 0:
 						self.gauge.SetValue(count)
-				except IOError:
-					count += 10
+				else:
+					break
 		wx.CallAfter(self.afterLoadFirmware)
 
 	def wrongBoardMessage(self):
@@ -225,7 +227,7 @@ class PreferencesDialog(wx.Dialog):
 		self.clearCheckBox.Disable()
 		self.boardsCombo.Disable()
 		self.okButton.Disable()
-		if not sys.isWindows() and not sys.isDarwin():
+		if not sys.isWindows():
 			self.gauge.SetValue(0)
 			self.gauge.Show()
 		self.waitCursor = wx.BusyCursor()
@@ -237,7 +239,7 @@ class PreferencesDialog(wx.Dialog):
 		self.clearCheckBox.Enable()
 		self.boardsCombo.Enable()
 		self.okButton.Enable()
-		if not sys.isWindows() and not sys.isDarwin():
+		if not sys.isWindows():
 			self.gauge.Hide()
 		del self.waitCursor
 		self.Fit()

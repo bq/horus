@@ -39,7 +39,7 @@ import webbrowser
 from horus.util import profile, resources, meshLoader, system as sys
 
 if sys.isDarwin():
-    from horus.engine import uvc
+    from horus.engine.uvc.mac import Camera_List
 
 from horus.gui.workbench.control.main import ControlWorkbench
 from horus.gui.workbench.scanning.main import ScanningWorkbench
@@ -737,7 +737,7 @@ Suite 330, Boston, MA  02111-1307  USA""")
             for i in xrange(count):
                 baselist.append(str(i))
         elif sys.isDarwin():
-            for device in uvc.Camera_List():
+            for device in Camera_List():
                 baselist.append(str(device.src_id))
         else:
             for device in ['/dev/video*']:

@@ -94,14 +94,7 @@ class Board:
 			if self.serialPort.isOpen():
 				#-- Force Reset and flush
 				self._reset()
-				tries = 3
-				#-- Check Handshake
-				while tries:
-					version = self.serialPort.readline()
-					if len(version) > 20:
-						break
-					tries -= 1
-					time.sleep(0.2)
+				version = self.serialPort.readline()
 				if version == "Horus 0.1 ['$' for help]\r\n":
 					self.setSpeedMotor(1)
 					self.setAbsolutePosition(0)
@@ -226,8 +219,7 @@ class Board:
 			return self._checkAcknowledge(self._sendRequest(cmd))
 
 	def _reset(self):
-		self.serialPort.setDTR(False)
-		time.sleep(0.022)
 		self.serialPort.flushInput()
 		self.serialPort.flushOutput()
-		self.serialPort.setDTR(True)
+		self.serialPort.write("\x18\r\n") # Ctrl-x
+		self.serialPort.readline()

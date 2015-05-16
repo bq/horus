@@ -33,6 +33,8 @@ import sys
 import glob
 import gettext
 
+from horus.util import system
+
 resourceBasePath = os.path.join(os.path.dirname(__file__), "../../../res")
 
 def getPathForResource(dir, subdir, resource_name):
@@ -49,11 +51,14 @@ def getPathForImage(name):
 def getPathForFirmware(name):
     return getPathForResource(resourceBasePath, 'firmware', name)
 
-def getPathForToolsLinux(name):
-    return getPathForResource(resourceBasePath, 'tools/linux', name)
-
-def getPathForToolsWindows(name):
-    return getPathForResource(resourceBasePath, 'tools/windows', name)
+def getPathForTools(name):
+    if system.isWindows():
+        path = getPathForResource(resourceBasePath, 'tools/windows', name)
+    elif system.isDarwin():
+        path = getPathForResource(resourceBasePath, 'tools/darwin', name)
+    else:
+        path = getPathForResource(resourceBasePath, 'tools/linux', name)
+    return path
 
 def getPathForMesh(name):
     return getPathForResource(resourceBasePath, 'meshes', name)
