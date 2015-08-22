@@ -208,6 +208,8 @@ class LaserTriangulation(Calibration):
 	def _start(self, progressCallback, afterCallback):
 		XL = None
 		XR = None
+		planol = 0
+		planor = 0
 
 		if sys.isWindows():
 			flush = 2
@@ -226,13 +228,16 @@ class LaserTriangulation(Calibration):
 			board.setRightLaserOff()
 
 			##-- Setup motor
-			step = 5
+			step = 2
 			angle = 0
 			board.setSpeedMotor(1)
 			board.enableMotor()
 			board.setSpeedMotor(150)
 			board.setAccelerationMotor(150)
-			time.sleep(0.1)
+			time.sleep(0.2)
+                        board.setRelativePosition(-90)
+                        board.moveMotor()
+                        time.sleep(0.2)
 
 			if progressCallback is not None:
 				progressCallback(0)
@@ -243,6 +248,7 @@ class LaserTriangulation(Calibration):
 					progressCallback(1.11*abs(angle/2.))
 
 				angle += step
+				print '> ',angle,' deg <'
 
 				camera.setExposure(profile.settings['exposure_calibration'])
 
@@ -253,7 +259,7 @@ class LaserTriangulation(Calibration):
 				ret = self.getPatternPlane(imageRaw)
 
 				if ret is not None:
-					step = 4 #2
+					step = 1 #2
 
 					d, n, corners = ret
 
@@ -262,7 +268,9 @@ class LaserTriangulation(Calibration):
 					#-- Image laser acquisition
 					imageRawLeft = camera.captureImage(flush=True, flushValue=flush)
 					board.setLeftLaserOn()
+					#time.sleep(0.2)
 					imageLeft = camera.captureImage(flush=True, flushValue=flush)
+					#time.sleep(0.2)
 					board.setLeftLaserOff()
 					self.image = imageLeft
 					if imageLeft is None:
@@ -270,7 +278,9 @@ class LaserTriangulation(Calibration):
 					
 					imageRawRight = camera.captureImage(flush=True, flushValue=flush)
 					board.setRightLaserOn()
+					#time.sleep(0.2)
 					imageRight = camera.captureImage(flush=True, flushValue=flush)
+					#time.sleep(0.2)
 					board.setRightLaserOff()
 					self.image = imageRight
 					if imageRight is None:
@@ -294,25 +304,32 @@ class LaserTriangulation(Calibration):
 							XL = xL
 						else:
 							XL = np.concatenate((XL,xL))
+                                                        planol += 1
+                                                        print 'Plano Izquierdo registrado ',planol,' veces'
 					xR = self.getPointCloudLaser(uR, vR, d, n)
 					if xR is not None:
 						if XR is None:
 							XR = xR
 						else:
 							XR = np.concatenate((XR,xR))
+                                                        planor += 1
+                                                        print 'Plano Derecho registrado ',planol,' veces'
 				else:
-					step = 5
+					step = 2
 					self.image = imageRaw
+					print 'No se ha detectado el patron'
 
 				board.setRelativePosition(step)
 				board.moveMotor()
-				time.sleep(0.1)
+				time.sleep(0.2)
 
 			# self.saveScene('XL.ply', XL)
 			# self.saveScene('XR.ply', XR)
 
 			#-- Compute planes
+                        print '>>>  Computando plano Izquierdo <<<'
 			dL, nL, stdL = self.computePlane(XL, 'l')
+                        print '>>> Computando plano Derecho <<<'
 			dR, nR, stdR = self.computePlane(XR, 'r')
 
 		##-- Switch off lasers
@@ -320,6 +337,9 @@ class LaserTriangulation(Calibration):
 		board.setRightLaserOff()
 
 		#-- Disable motor
+                board.setRelativePosition(-90)
+                board.moveMotor()
+                time.sleep(0.2)
 		board.disableMotor()
 
 		#-- Restore camera exposure
@@ -396,9 +416,9 @@ class LaserTriangulation(Calibration):
 
 					Xm = X.sum(axis=1)/n
 					M = np.array(X-Xm)
-					#begin = datetime.datetime.now()
+					begin = datetime.datetime.now()
 					U = linalg.svds(M, k=2)[0]
-					#print "nº {0}  time {1}".format(n, datetime.datetime.now()-begin)
+					print "nº {0}  time {1}".format(n, datetime.datetime.now()-begin)
 					s, t = U.T
 					n = np.cross(s, t)
 					if n[2] < 0:
@@ -413,15 +433,15 @@ class LaserTriangulation(Calibration):
 					std = distance_vector.std()
 
 					final_points=np.where(abs(distance_vector)<abs(2*std) )[0]
-					#print 'iteration ', trials, 'd,n,std, len(final_points)', d,n,std, len(final_points)
+					print 'iteration ', trials, 'd,n,std, len(final_points)', d,n,std, len(final_points)
 
 					X=X[:, final_points]
 
 					#Save each iteration point cloud
-					# if side == 'l':
-					# 	self.saveScene('new_'+str(trials)+'_XL.ply', np.asarray(X.T))
-					# else:
-					# 	self.saveScene('new_'+str(trials)+'_XR.ply', np.asarray(X.T))
+					if side == 'l':
+						self.saveScene('new_'+str(trials)+'_XL.ply', np.asarray(X.T))
+					else:
+						self.saveScene('new_'+str(trials)+'_XR.ply', np.asarray(X.T))
 
 					if std<0.1 or len(final_points)<1000:
 						break
@@ -537,12 +557,12 @@ class SimpleLaserTriangulation(Calibration):
 			##-- Move pattern until ||(R-I)|| < e
 			board.setSpeedMotor(1)
 			board.enableMotor()
-			time.sleep(0.3)
+			time.sleep(0.2)
 
 			t, n, corners = self.getPatternDepth(board, camera, progressCallback)
 
 			if t is not None and corners is not None:
-				time.sleep(0.1)
+				time.sleep(0.2)
 
 				#-- Get images
 				imgRaw = camera.captureImage(flush=True, flushValue=1)
@@ -613,6 +633,7 @@ class SimpleLaserTriangulation(Calibration):
 							if self.isCalibrating:
 								board.setRelativePosition(-angle)
 								board.moveMotor()
+								print '> ',angle,' deg <'
 							break
 						distanceAnt = distance
 						angle = np.max(((distance-epsilon) * 30, 5))
@@ -623,6 +644,7 @@ class SimpleLaserTriangulation(Calibration):
 			if self.isCalibrating:
 				board.setRelativePosition(angle)
 				board.moveMotor()
+				print '> ',angle,' deg <'
 
 			if progressCallback is not None:
 				if distance < np.inf:
@@ -643,7 +665,7 @@ class SimpleLaserTriangulation(Calibration):
 					if progressCallback is not None:
 						progressCallback(90)
 
-		#print "Distance: {0} Angle: {1}".format(round(distance,3), round(angle,3))
+		print "Distance: {0} Angle: {1}".format(round(distance,3), round(angle,3))
 
 		return t, n, corners
 
@@ -717,9 +739,10 @@ class PlatformExtrinsics(Calibration):
 		Calibration.__init__(self)
 		self.criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
 		self.image = None
+		self.patron = 0
 
 	def setExtrinsicsStep(self, step):
-		self.extrinsicsStep = step
+		self.extrinsicsStep = -2
 
 	def setIntrinsics(self, cameraMatrix, distortionVector):
 		self.cameraMatrix = cameraMatrix
@@ -758,6 +781,9 @@ class PlatformExtrinsics(Calibration):
 
 			board = self.driver.board
 			camera = self.driver.camera
+                        board.setRelativePosition(90)
+                        board.moveMotor()
+                        time.sleep(0.2)
 
 			x = []
 			y = []
@@ -781,10 +807,11 @@ class PlatformExtrinsics(Calibration):
 
 			while self.isCalibrating and abs(angle) < 180:
 				angle += step
+				print '> ',angle,' deg <'
 				t = self.getPatternPosition(step, board, camera)
 				if progressCallback is not None:
 					progressCallback(1.1*abs(angle/2.))
-				time.sleep(0.1)
+				time.sleep(0.2)
 				if t is not None:
 					x += [t[0][0]]
 					y += [t[1][0]]
@@ -811,6 +838,9 @@ class PlatformExtrinsics(Calibration):
 				t = center - self.patternDistance * np.array(normal)
 
 			#-- Disable motor
+                        board.setRelativePosition(90)
+                        board.moveMotor()
+                        time.sleep(0.2)
 			board.disableMotor()
 
 		if self.isCalibrating and t is not None and np.linalg.norm(t-[5,80,320]) < 100:
@@ -841,10 +871,12 @@ class PlatformExtrinsics(Calibration):
 			self.image = image
 			ret = self.solvePnp(image, self.objpoints, self.cameraMatrix, self.distortionVector, self.patternColumns, self.patternRows)
 			if ret is not None:
+				self.patron += 1
 				if ret[0]:
 					t = ret[2]
 			board.setRelativePosition(step)
 			board.moveMotor()
+		print 'Patron leido ',self.patron,' veces'
 		return t
 
 	def solvePnp(self, image, objpoints, cameraMatrix, distortionVector, patternColumns, patternRows):
@@ -910,4 +942,8 @@ class PlatformExtrinsics(Calibration):
 		synthetic = [list(centerPoint+ RiF*np.cos(phi)*self.r+RiF*np.sin(phi)*self.s) for phi in np.linspace(0, 2*np.pi,50)]
 		[cxTupel,cyTupel,czTupel] = [ x for x in zip(*synthetic)]
 
+		# Muestra al final las veces que se ha leido si no se quiere que lo diga en cada paso
+		# print 'Patron leido ',self.patron,' veces'
+		self.patron = 0
+		print 'Centro: ', centerPoint, ' Rotacion: ', R
 		return centerPoint, R, [cxTupel,cyTupel,czTupel]

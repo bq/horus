@@ -349,7 +349,7 @@ class LaserTriangulationMainPage(Page):
 
 		#-- Image View
 		imageView = ImageView(self._panel)
-		imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-right.jpg")))
+		imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-center.jpg")))
 
 		#-- Video View
 		self.videoView = VideoView(self._panel, self.getFrame, 50)
@@ -587,7 +587,7 @@ class SimpleLaserTriangulationMainPage(Page):
 
 		#-- Image View
 		imageView = ImageView(self._panel)
-		imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-right.jpg")))
+		imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-center.jpg")))
 
 		#-- Video View
 		self.videoView = VideoView(self._panel, self.getFrame, 50)
@@ -775,7 +775,7 @@ class PlatformExtrinsicsMainPage(Page):
 
 		#-- Image View
 		imageView = ImageView(self._panel)
-		imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-left.jpg")))
+		imageView.setImage(wx.Image(resources.getPathForImage("pattern-position-center.jpg")))
 
 		#-- Video View
 		self.videoView = VideoView(self._panel, self.getFrame, 50)
