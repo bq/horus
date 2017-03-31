@@ -24,6 +24,8 @@ def check_opencv_major_version(v):
     if cv2.__version__.split(".")[0] == v:
         return True
 
+# Get the correct cv2 constant for OpenCV v2 or v3, depending on what the
+# user has installed.
 def cv_const(c):
     if check_opencv_major_version("2"):
         return {

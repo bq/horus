@@ -52,7 +52,6 @@ class PointCloudGeneration(object):
         u, v = points_2d
         points_for_undistort = np.array([np.concatenate((u, v)).reshape(2, len(u)).T])
         
-        print points_for_undistort.shape
         # use opencv's undistortPoints, which incorporates the distortion coefficients
         points_undistorted = cv2.undistortPoints(points_for_undistort, self.calibration_data.camera_matrix, self.calibration_data.distortion_vector)
 
