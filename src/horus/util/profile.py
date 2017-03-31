@@ -105,6 +105,13 @@ class Settings(collections.MutableMapping):
                 continue
             if categories is None or category in categories:
                 for key in json_dict[category]:
+                    if key == 'machine_model_path':
+                        # before putting this key in the settings dict, make sure the
+                        # file actually exists (else an exception is thrown)
+                        file_path_from_settings = json_dict[category][key]['value']
+                        if not os.path.exists(file_path_from_settings):
+                            print "can't find file {0}".format(file_path_from_settings)
+                            continue
                     if key in self._settings_dict:
                         self._convert_to_type(key, json_dict[category][key])
                         self.get_setting(key)._load_json_dict(json_dict[category][key])
