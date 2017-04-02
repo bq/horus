@@ -7,7 +7,7 @@ __license__ = 'GNU General Public License v2 http://www.gnu.org/licenses/gpl2.ht
 
 import wx._core
 
-from horus.util import resources, system
+from horus.util import resources, system, profile
 
 from horus.gui.engine import driver
 from horus.engine.driver.board import WrongFirmware, BoardNotConnected, OldFirmware
@@ -64,6 +64,14 @@ class ToolbarConnection(Toolbar):
         self.Bind(wx.EVT_TOOL, self.on_disconnect_tool_clicked, self.disconnect_tool)
 
     def on_connect_tool_clicked(self, event):
+        # If no camera id is selected
+        video_list = driver.camera.get_video_list()
+        current_video_id = profile.settings['camera_id']
+        if len(video_list) > 0:
+            if current_video_id not in video_list:
+                profile.settings['camera_id'] = unicode(video_list[0])
+                driver.camera.camera_id = int(profile.settings['camera_id'][-1:])
+
         driver.set_callbacks(lambda: wx.CallAfter(self.before_connect),
                              lambda r: wx.CallAfter(self.after_connect, r))
         driver.connect()
@@ -107,7 +115,11 @@ class ToolbarConnection(Toolbar):
                                    _("You probably have selected the wrong camera.\n"
                                      "Please select another Camera ID"))
                 self.update_status(False)
+                wrong_camera_id = profile.settings['camera_id']
                 self.GetParent().launch_preferences(basic=True)
+                # Do not save camera id if it is wrong
+                if profile.settings['camera_id'] == wrong_camera_id:
+                    profile.settings['camera_id'] = ''
             elif isinstance(result, CameraNotConnected):
                 self._show_message(_(result), wx.ICON_ERROR,
                                    _("Please plug your camera in and try to connect again"))

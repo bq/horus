@@ -107,17 +107,17 @@ class ImageCapture(object):
     def set_mode_pattern(self):
         self.set_mode(self.pattern_mode)
 
-    def flush_texture(self):
+    def flush_texture(self, value=0):
         self.set_mode_texture()
-        self.capture_image(flush=0)
+        self.capture_image(flush=value)
 
-    def flush_laser(self):
+    def flush_laser(self, value=0):
         self.set_mode_laser()
-        self.capture_image(flush=0)
+        self.capture_image(flush=value)
 
-    def flush_pattern(self):
+    def flush_pattern(self, value=0):
         self.set_mode_pattern()
-        self.capture_image(flush=0)
+        self.capture_image(flush=value)
 
     def capture_texture(self):
         self.set_mode(self.texture_mode)

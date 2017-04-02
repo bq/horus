@@ -144,9 +144,11 @@ class ResultPage(Page):
             nR = result[1][1]
             stdR = result[1][2]
             self.result = (dL, nL, dR, nR)
+            np.set_printoptions(formatter={'float': '{:g}'.format})
             text = ' L: {0} {1}  R: {2} {3}'.format(
                    round(dL, 3), np.round(nL, 3),
                    round(dR, 3), np.round(nR, 3))
+            np.set_printoptions()
             self.desc_text.SetLabel(text)
             self.plot_panel.clear()
             self.plot_panel.add((dL, nL, stdL, dR, nR, stdR))

@@ -20,7 +20,7 @@ class Wizard(wx.Dialog):
 
     def __init__(self, parent):
         if sys.is_windows():
-            size = (760, 540)
+            size = (760, 560)
         else:
             size = (760, 520)
         super(Wizard, self).__init__(parent, title="", size=size)

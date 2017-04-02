@@ -87,7 +87,7 @@ class Settings(collections.MutableMapping):
             elif setting_type == np.ndarray:
                 value = np.asarray(value)
         except:
-            raise ValueError("Unable to cast setting %s to type %s" % (key, setting_type))
+            logger.error("Unable to cast setting %s to type %s" % (key, setting_type))
         else:
             self.get_setting(key).value = value
 
@@ -105,6 +105,13 @@ class Settings(collections.MutableMapping):
                 continue
             if categories is None or category in categories:
                 for key in json_dict[category]:
+                    if key == 'machine_model_path':
+                        # before putting this key in the settings dict, make sure the
+                        # file actually exists (else an exception is thrown)
+                        file_path_from_settings = json_dict[category][key]['value']
+                        if not os.path.exists(file_path_from_settings):
+                            print "can't find file {0}".format(file_path_from_settings)
+                            continue
                     if key in self._settings_dict:
                         self._convert_to_type(key, json_dict[category][key])
                         self.get_setting(key)._load_json_dict(json_dict[category][key])
@@ -247,6 +254,8 @@ class Settings(collections.MutableMapping):
                     'profile_settings', bool, True))
 
         self._add_setting(
+            Setting('draw_line_scanning', _('Draw line'), 'profile_settings', bool, True))
+        self._add_setting(
             Setting('red_channel_scanning', _('Red channel'), 'profile_settings',
                     unicode, u'R (RGB)',
                     possible_values=(u'R (RGB)', u'Cr (YCrCb)', u'U (YUV)')))
@@ -320,10 +329,10 @@ class Settings(collections.MutableMapping):
                     'profile_settings', bool, True))
         self._add_setting(
             Setting('threshold_value_calibration', _('Threshold'), 'profile_settings',
-                    int, 30, min_value=0, max_value=255))
+                    int, 50, min_value=0, max_value=255))
         self._add_setting(
             Setting('blur_enable_calibration', _('Enable blur'),
-                    'profile_settings', bool, True))
+                    'profile_settings', bool, False))
         self._add_setting(
             Setting('blur_value_calibration', _('Blur'), 'profile_settings',
                     int, 2, min_value=0, max_value=10))
@@ -397,25 +406,25 @@ class Settings(collections.MutableMapping):
                     unicode, u'Texture', possible_values=(u'Texture', u'Laser', u'Gray', u'Line')))
 
         self._add_setting(
-            Setting('save_image_button', _('Save image'), 'profile_settings', unicode, u''))
+            Setting('save_image_button', _('Save image'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('left_button', _('Left'), 'profile_settings', unicode, u''))
+            Setting('left_button', _('Left'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('right_button', _('Right'), 'profile_settings', unicode, u''))
+            Setting('right_button', _('Right'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('move_button', _('Move'), 'profile_settings', unicode, u''))
+            Setting('move_button', _('Move'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('enable_button', _('Enable'), 'profile_settings', unicode, u''))
+            Setting('enable_button', _('Enable'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('reset_origin_button', _('Reset origin'), 'profile_settings', unicode, u''))
+            Setting('reset_origin_button', _('Reset origin'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('gcode_gui', _('Send'), 'profile_settings', unicode, u''))
+            Setting('gcode_gui', _('Send'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('ldr_value', _('Send'), 'profile_settings', unicode, u''))
+            Setting('ldr_value', _('Send'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('autocheck_button', _('Perform autocheck'), 'profile_settings', unicode, u''))
+            Setting('autocheck_button', _('Perform autocheck'), 'no_settings', unicode, u''))
         self._add_setting(
-            Setting('set_resolution_button', _('Set resolution'), 'profile_settings', unicode, u''))
+            Setting('set_resolution_button', _('Set resolution'), 'no_settings', unicode, u''))
 
         # -- Calibration Settings
 
@@ -431,6 +440,16 @@ class Settings(collections.MutableMapping):
         self._add_setting(
             Setting('pattern_origin_distance', _('Origin distance (mm)'), 'calibration_settings',
                     float, 0.0, min_value=0.0))
+
+        self._add_setting(
+            Setting('motor_step_calibration', _(u'Step (º)'), 'calibration_settings',
+                    float, 4.5))
+        self._add_setting(
+            Setting('motor_speed_calibration', _(u'Speed (º/s)'), 'calibration_settings',
+                    float, 200.0, min_value=1.0, max_value=1000.0))
+        self._add_setting(
+            Setting('motor_acceleration_calibration', _(u'Acceleration (º/s²)'),
+                    'calibration_settings', float, 200.0, min_value=1.0, max_value=1000.0))
 
         self._add_setting(
             Setting('adjust_laser', _('Adjust laser'), 'calibration_settings', bool, True))
@@ -495,8 +514,9 @@ class Settings(collections.MutableMapping):
             Setting('current_panel_calibration', u'pattern_settings', 'profile_settings',
                     unicode, u'pattern_settings',
                     possible_values=(u'pattern_settings', u'camera_intrinsics',
-                                     u'scanner_autocheck', u'laser_triangulation',
-                                     u'platform_extrinsics', u'video_settings')))
+                                     u'scanner_autocheck', u'rotating_platform_settings',
+                                     u'laser_triangulation', u'platform_extrinsics',
+                                     u'video_settings')))
 
         # -- Machine Settings
 
@@ -558,21 +578,21 @@ class Settings(collections.MutableMapping):
                     np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([3, 2, 3]))))
         self._add_setting(
             Setting('flush_stream_linux', 'Flush stream Linux', 'preferences',
-                    np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([0, 2, 0]))))
+                    np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([0, 3, 3]))))
         # - Darwin
         self._add_setting(
             Setting('flush_darwin', 'Flush Darwin', 'preferences',
                     np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([4, 3, 4]))))
         self._add_setting(
             Setting('flush_stream_darwin', 'Flush stream Darwin', 'preferences',
-                    np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([0, 2, 0]))))
+                    np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([0, 3, 3]))))
         # - Windows
         self._add_setting(
             Setting('flush_windows', 'Flush Windows', 'preferences',
                     np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([4, 3, 4]))))
         self._add_setting(
             Setting('flush_stream_windows', 'Flush stream Windows', 'preferences',
-                    np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([0, 2, 0]))))
+                    np.ndarray, np.ndarray(shape=(3,), dtype=int, buffer=np.array([0, 3, 3]))))
 
         self._add_setting(
             Setting('point_size', 'Point size', 'preferences', int, 2, min_value=1, max_value=4))
@@ -654,7 +674,7 @@ class Setting(object):
             return
         self._check_type(value)
         value = self._check_range(value)
-        self._check_possible_values(value)
+        value = self._check_possible_values(value)
         self.__value = value
 
     @property
@@ -665,7 +685,7 @@ class Setting(object):
     def default(self, value):
         self._check_type(value)
         value = self._check_range(value)
-        self._check_possible_values(value)
+        value = self._check_possible_values(value)
         self.__default = value
 
     @property
@@ -690,20 +710,16 @@ class Setting(object):
 
     def _check_type(self, value):
         if not isinstance(value, self._type):
-            raise TypeError("Error when setting %s.\n%s (%s) is not of type %s. "
-                            "Please remove current profile at ~/.horus" %
-                            (self._id, value, type(value), self._type))
+            logger.error("Error when setting %s.\n%s (%s) is not of type %s. "
+                         "Please remove current profile at ~/.horus" %
+                         (self._id, value, type(value), self._type))
 
     def _check_range(self, value):
         if self.min_value is not None and value < self.min_value:
-            # raise ValueError('Error when setting %s.\n%s is below min value %s.' %
-            # (self._id, value, self.min_value))
             logger.warning('Warning: For setting %s, %s is below min value %s.' % (self._id, value,
                            self.min_value))
             return self.min_value
         if self.max_value is not None and value > self.max_value:
-            # raise ValueError('Error when setting %s.\n%s is above max value %s.' %
-            # (self._id, value, self.max_value))
             logger.warning('Warning: For setting %s.\n%s is above max value %s.' % (self._id, value,
                            self.max_value))
             return self.max_value
@@ -711,8 +727,11 @@ class Setting(object):
 
     def _check_possible_values(self, value):
         if self._possible_values is not None and value not in self._possible_values:
-            raise ValueError('Error when setting %s.\n%s is not within the possible values %s.' % (
+            logger.error('Error when setting %s.\n%s is not within the possible values %s.' % (
                 self._id, value, self._possible_values))
+            if len(self._possible_values) > 0:
+                return self._possible_values[0]
+        return value
 
     def _load_json_dict(self, json_dict):
         # Only load configurable fields (__value, __min_value, __max_value)

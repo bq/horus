@@ -64,10 +64,12 @@ class LaserSegmentation(object):
             u = (self.calibration_data.weight_matrix * image).sum(axis=1)[v] / s[v]
             if self.refinement_method == 'SGF':
                 # Segmented gaussian filter
-                u, v = self._sgf(u, v, s)
+                u = self._sgf(u, s)
             elif self.refinement_method == 'RANSAC':
                 # Random sample consensus
-                u, v = self._ransac(u, v)
+                u = self._ransac(u, v)
+            # Saturate u
+            u = np.clip(u, 0, self.calibration_data.width - 1)
             return (u, v), image
 
     def compute_hough_lines(self, image):
@@ -81,24 +83,20 @@ class LaserSegmentation(object):
             #   u2 = u1 - height * np.tan(theta)
             return lines
 
-    def compute_line_segmentation(self, image, roi_mask=False):
+    def compute_line_segmentation(self, image):
         if image is not None:
             # Apply ROI mask
-            if roi_mask:
-                image = self.point_cloud_roi.mask_image(image)
-            # Obtain red channel
+            image = self.point_cloud_roi.mask_image(image)
             image = self._obtain_red_channel(image)
-            if image is not None:
-                # Threshold image
-                image = self._threshold_image(image)
-                # Window mask
-                image = self._window_mask(image)
+            image = self._threshold_image(image)
+            image = self._window_mask(image)
             return image
 
     def _obtain_red_channel(self, image):
         ret = None
         if self.red_channel == 'R (RGB)':
             ret = cv2.split(image)[0]
+            # ret = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         elif self.red_channel == 'Cr (YCrCb)':
             ret = cv2.split(cv2.cvtColor(image, cv2.COLOR_RGB2YCR_CB))[1]
         elif self.red_channel == 'U (YUV)':
@@ -107,29 +105,31 @@ class LaserSegmentation(object):
 
     def _threshold_image(self, image):
         if self.threshold_enable:
-            image = cv2.threshold(
-                image, self.threshold_value, 255, cv2.THRESH_TOZERO)[1]
-            if self.blur_enable:
-                image = cv2.blur(image, (self.blur_value, self.blur_value))
-            image = cv2.threshold(
-                image, self.threshold_value, 255, cv2.THRESH_TOZERO)[1]
+            if image is not None:
+                image = cv2.threshold(
+                    image, self.threshold_value, 255, cv2.THRESH_TOZERO)[1]
+                if self.blur_enable:
+                    image = cv2.blur(image, (self.blur_value, self.blur_value))
+                image = cv2.threshold(
+                    image, self.threshold_value, 255, cv2.THRESH_TOZERO)[1]
         return image
 
     def _window_mask(self, image):
         if self.window_enable:
-            peak = image.argmax(axis=1)
-            _min = peak - self.window_value
-            _max = peak + self.window_value + 1
-            mask = np.zeros_like(image)
-            for i in xrange(self.calibration_data.height):
-                mask[i, _min[i]:_max[i]] = 255
-            # Apply mask
-            image = cv2.bitwise_and(image, mask)
+            if image is not None:
+                peak = image.argmax(axis=1)
+                _min = peak - self.window_value
+                _max = peak + self.window_value + 1
+                mask = np.zeros_like(image)
+                for i in xrange(self.calibration_data.height):
+                    mask[i, _min[i]:_max[i]] = 255
+                # Apply mask
+                image = cv2.bitwise_and(image, mask)
         return image
 
     # Segmented gaussian filter
 
-    def _sgf(self, u, v, s):
+    def _sgf(self, u, s):
         if len(u) > 1:
             i = 0
             sigma = 2.0
@@ -142,18 +142,19 @@ class LaserSegmentation(object):
                 fseg = scipy.ndimage.gaussian_filter(u[i:i + j], sigma=sigma)
                 f = np.concatenate((f, fseg))
                 i += j
-            return f, v
+            return f
         else:
-            return u, v
+            return u
 
     # RANSAC implementation: https://github.com/ahojnnes/numpy-snippets/blob/master/ransac.py
 
     def _ransac(self, u, v):
         if len(u) > 1:
             data = np.vstack((v.ravel(), u.ravel())).T
-            dr, thetar = self.ransac(data, self.LinearLeastSquares2D(), 2, 2)
+            dr, thetar = self.ransac(data, self.LinearLeastSquares2D(), 2, 1)
+            # v = np.array(range(min(v), max(v)))
             u = (dr - v * math.sin(thetar)) / math.cos(thetar)
-        return u, v
+        return u
 
     class LinearLeastSquares2D(object):
         '''

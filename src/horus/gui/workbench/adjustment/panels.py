@@ -86,6 +86,7 @@ class ScanCapturePanel(ExpandablePanel):
         current_video.updating = True
         current_video.sync()
         # Update mode settings
+        current_video.calibration = False
         current_video.mode = profile.settings['capture_mode_scanning']
         texture_mode = image_capture.texture_mode
         texture_mode.set_brightness(profile.settings['brightness_texture_scanning'])
@@ -139,7 +140,7 @@ class ScanCapturePanel(ExpandablePanel):
             self.content.SetSizerAndFit(self.content.vbox)
         if sys.is_windows():
             self.parent.Refresh()
-            self.parent.Layout()
+        self.parent.Layout()
         self.Layout()
 
 
@@ -150,6 +151,7 @@ class ScanSegmentationPanel(ExpandablePanel):
 
     def add_controls(self):
         # self.add_control('red_channel_scanning', ComboBox)
+        self.add_control('draw_line_scanning', CheckBox)
         self.add_control(
             'threshold_value_scanning', Slider,
             _("Remove all pixels which intensity is less that the threshold value"))
@@ -172,6 +174,7 @@ class ScanSegmentationPanel(ExpandablePanel):
 
     def update_callbacks(self):
         # self.update_callback('red_channel_scanning', laser_segmentation.set_red_channel)
+        self.update_callback('draw_line_scanning', current_video.set_draw_line)
         self.update_callback('threshold_value_scanning', laser_segmentation.set_threshold_value)
         self.update_callback('threshold_enable_scanning', laser_segmentation.set_threshold_enable)
         self.update_callback('blur_value_scanning', laser_segmentation.set_blur_value)
@@ -184,6 +187,7 @@ class ScanSegmentationPanel(ExpandablePanel):
         current_video.updating = True
         current_video.sync()
         # Update mode settings
+        current_video.calibration = False
         current_video.mode = 'Gray'
         laser_mode = image_capture.laser_mode
         laser_mode.set_brightness(profile.settings['brightness_laser_scanning'])
@@ -191,6 +195,7 @@ class ScanSegmentationPanel(ExpandablePanel):
         laser_mode.set_saturation(profile.settings['saturation_laser_scanning'])
         laser_mode.set_exposure(profile.settings['exposure_laser_scanning'])
         image_capture.set_remove_background(profile.settings['remove_background_scanning'])
+        current_video.set_draw_line(profile.settings['draw_line_scanning'])
         laser_segmentation.set_red_channel(profile.settings['red_channel_scanning'])
         laser_segmentation.set_threshold_value(profile.settings['threshold_value_scanning'])
         laser_segmentation.set_threshold_enable(profile.settings['threshold_enable_scanning'])
@@ -276,6 +281,7 @@ class CalibrationCapturePanel(ExpandablePanel):
         current_video.updating = True
         current_video.sync()
         # Update mode settings
+        current_video.calibration = True
         current_video.mode = profile.settings['capture_mode_calibration']
         profile.settings['current_video_mode_adjustment'] = current_video.mode
         profile.settings['current_panel_adjustment'] = 'calibration_capture'
@@ -329,7 +335,7 @@ class CalibrationCapturePanel(ExpandablePanel):
             self.content.SetSizerAndFit(self.content.vbox)
         if sys.is_windows():
             self.parent.Refresh()
-            self.parent.Layout()
+        self.parent.Layout()
         self.Layout()
 
 
@@ -375,6 +381,7 @@ class CalibrationSegmentationPanel(ExpandablePanel):
         current_video.updating = True
         current_video.sync()
         # Update mode settings
+        current_video.calibration = True
         current_video.mode = 'Gray'
         profile.settings['current_video_mode_adjustment'] = current_video.mode
         profile.settings['current_panel_adjustment'] = 'calibration_segmentation'

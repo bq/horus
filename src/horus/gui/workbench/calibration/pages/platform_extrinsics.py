@@ -142,8 +142,10 @@ class ResultPage(Page):
             R = result[0]
             t = result[1]
             self.result = (R, t)
+            np.set_printoptions(formatter={'float': '{:g}'.format})
             text = ' R: {0}  t: {1}'.format(
                    np.round(R, 2), np.round(t, 4)).replace('\n', '')
+            np.set_printoptions()
             self.desc_text.SetLabel(text)
             self.plot_panel.clear()
             self.plot_panel.add(result)

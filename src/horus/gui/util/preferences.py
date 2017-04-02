@@ -206,7 +206,7 @@ class PreferencesDialog(wx.Dialog):
                 time.sleep(3)  # Clear EEPROM
             self.count = -50
             out = avr_dude.flash(hex_path=self.hex_path, callback=self.increment_progress)
-            if 'not in sync' in out or 'Invalid' in out:
+            if 'not in sync' in out or 'Invalid' in out or 'is not responding' in out:
                 wx.CallAfter(self.wrong_board_message)
             wx.CallAfter(self.after_load_firmware)
         except Exception as e:

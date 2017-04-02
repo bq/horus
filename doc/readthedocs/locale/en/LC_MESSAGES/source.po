@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Horus 0.2rc1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-03 10:22+0200\n"
+"POT-Creation-Date: 2016-06-10 13:25+0200\n"
 "PO-Revision-Date: 2016-05-26 14:59+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -628,21 +628,85 @@ msgid "ZUM BT-328"
 msgstr ""
 
 #: ../../source/scanner-components/board.rst:16
-msgid "ZUM SCAN Shield"
+msgid "Arduino UNO"
 msgstr ""
 
-#: ../../source/scanner-components/board.rst:23
-msgid "Horus Firmware"
+#: ../../source/scanner-components/board.rst:22
+msgid "Supported shields"
 msgstr ""
 
 #: ../../source/scanner-components/board.rst:25
-msgid ""
-"The firmware is an adaptation of Grbl. Source code is here: "
-"https://github.com/bqlabs/horus-fw."
+msgid "ZUM SCAN"
 msgstr ""
 
-#: ../../source/scanner-components/board.rst:27
+#: ../../source/scanner-components/board.rst:32
+msgid "Horus Firmware"
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:34
+msgid ""
+"The firmware is an adaptation of Grbl. Releases are hosted here: "
+"https://github.com/bqlabs/horus-fw/releases."
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:36
 msgid "It can be uploaded in **Preferences > Upload firmware**."
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:39
+#: ../../source/scanner-components/camera.rst:146
+#: ../../source/scanner-components/lasers.rst:69
+#: ../../source/scanner-components/motor.rst:66
+#: ../../source/scanner-components/pattern.rst:60
+msgid "Troubleshooting"
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:42
+msgid "Board not detected"
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:44
+msgid ""
+"Sometimes **Arduino UNO** board is not detected correctly, specially if "
+"you are using **Windows 10** or **strange clones**. First of all, follow "
+"this steps to ensure that your board and your operating system are "
+"working fine together:"
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:46
+msgid ""
+"Follow this guide to install the drivers and the Arduino IDE: "
+"https://www.arduino.cc/en/Guide/Windows."
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:47
+msgid ""
+"Upload the `blink` example. If it doesn't work go to: "
+"https://forum.arduino.cc/ to find a solution."
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:49
+msgid ""
+"Then if the led is blinking is time to upload the Horus firmware. You "
+"have two options:"
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:51
+msgid ""
+"In Horus GUI, go to *Preferences*. Select your board and press *Upload "
+"firmware*."
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:52
+msgid ""
+"In Arduino IDE, download the source code (https://github.com/bqlabs"
+"/horus-fw) and upload the file horus-fw.ino."
+msgstr ""
+
+#: ../../source/scanner-components/board.rst:56
+msgid ""
+"If you have any problem related to the board or the shield please put it "
+"here: https://github.com/bqlabs/horus/issues to update this manual."
 msgstr ""
 
 #: ../../source/scanner-components/camera.rst:4
@@ -997,13 +1061,6 @@ msgstr ""
 msgid ""
 "In Linux, a `custom OpenCV`_ version is used, because of the next "
 "`reasons`_. In Windows and Mac, standard 2.4.9 version is used."
-msgstr ""
-
-#: ../../source/scanner-components/camera.rst:146
-#: ../../source/scanner-components/lasers.rst:69
-#: ../../source/scanner-components/motor.rst:66
-#: ../../source/scanner-components/pattern.rst:60
-msgid "Troubleshooting"
 msgstr ""
 
 #: ../../source/scanner-components/camera.rst:149
@@ -1490,7 +1547,7 @@ msgid "These settings are applied during the scanning process."
 msgstr ""
 
 #: ../../source/workbenches/adjustment.rst:14
-#: ../../source/workbenches/adjustment.rst:44
+#: ../../source/workbenches/adjustment.rst:47
 msgid "Capture"
 msgstr ""
 
@@ -1517,7 +1574,7 @@ msgid ""
 msgstr ""
 
 #: ../../source/workbenches/adjustment.rst:27
-#: ../../source/workbenches/adjustment.rst:57
+#: ../../source/workbenches/adjustment.rst:60
 msgid "Segmentation"
 msgstr ""
 
@@ -1528,52 +1585,58 @@ msgid ""
 msgstr ""
 
 #: ../../source/workbenches/adjustment.rst:31
-#: ../../source/workbenches/adjustment.rst:61
+msgid ""
+"**Draw line**: show the computed lines in red from the segmented laser "
+"image."
+msgstr ""
+
+#: ../../source/workbenches/adjustment.rst:32
+#: ../../source/workbenches/adjustment.rst:64
 msgid ""
 "**Threshold**: remove all pixels which intensity is less that the "
 "threshold value."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:32
-#: ../../source/workbenches/adjustment.rst:62
+#: ../../source/workbenches/adjustment.rst:33
+#: ../../source/workbenches/adjustment.rst:65
 msgid "**Blur**: blur with Normalized box filter. Kernel size: 2 * value + 1."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:33
-#: ../../source/workbenches/adjustment.rst:63
+#: ../../source/workbenches/adjustment.rst:34
+#: ../../source/workbenches/adjustment.rst:66
 msgid ""
 "**Window**: filter pixels out of 2 * window value around the intensity "
 "peak."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:34
+#: ../../source/workbenches/adjustment.rst:35
 msgid ""
 "**Refinement**: apply None or SGF algorithms for line smooth. SGF "
 "produces continous surfaces."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:39
+#: ../../source/workbenches/adjustment.rst:42
 msgid "Calibration adjustments"
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:41
+#: ../../source/workbenches/adjustment.rst:44
 msgid "These settings are applied during the calibration processes."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:46
+#: ../../source/workbenches/adjustment.rst:49
 msgid ""
 "In this section you can adjust the parameters of the capture during the "
 "calibration process. These parameters must be adjusted with the "
 "calibration pattern."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:48
+#: ../../source/workbenches/adjustment.rst:51
 msgid ""
 "The *Pattern mode* contains the settings used to capture the pattern. "
 "These are: brightness, constrast, saturation and exposure."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:52
+#: ../../source/workbenches/adjustment.rst:55
 msgid ""
 "The *Laser mode* contains the settings used to capture and detect the "
 "laser over the pattern. These are: brightness, constrast, saturation, "
@@ -1581,13 +1644,13 @@ msgid ""
 "the laser detection by consuming twice as long."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:59
+#: ../../source/workbenches/adjustment.rst:62
 msgid ""
 "In this section you can adjust the parameters for the laser stripe "
 "segmentation during the calibration processes."
 msgstr ""
 
-#: ../../source/workbenches/adjustment.rst:64
+#: ../../source/workbenches/adjustment.rst:67
 msgid ""
 "**Refinement**: apply None, SGF, RANSAC algorithms for line smooth. SGF "
 "produces continous surfaces. RANSAC produces flat surfaces."
@@ -1974,12 +2037,12 @@ msgstr ""
 #~ msgid "To enable the advanced mode go to *Menu > View > Advanced mode*."
 #~ msgstr ""
 
+#~ msgid "ZUM SCAN Shield"
+#~ msgstr ""
+
 #~ msgid ""
-#~ "**Step**: is the angle increased in "
-#~ "each scan iteration. The smaller step,"
-#~ " the greater radial resolution, and "
-#~ "also more scanning time. The default "
-#~ "value is 0.45º, that is 800 steps"
-#~ " per revolution."
+#~ "In Arduino IDE, download the source "
+#~ "code (https://github.com/bqlabs/horus-fw) and "
+#~ "upload horus-fw.ino."
 #~ msgstr ""
 

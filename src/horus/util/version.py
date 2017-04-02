@@ -27,6 +27,9 @@ class Version:
             self.number = version
             self.prenumber = 'z'
 
+    def __str__(self):
+        return str(self.number) + str(self.prenumber)
+
 
 current_version = Version(__version__)
 current_datetime = __datetime__
@@ -67,9 +70,9 @@ def _get_executable_url(version):
     url = None
     if sys.is_linux():
         import platform
-        url = 'https://launchpad.net/~bqlabs/+archive/ubuntu/horus/+files/'
+        url = 'https://launchpad.net/~bqlabs/+archive/ubuntu/horus-dev/+files/'
         url += 'horus_'
-        url += version + '-'
+        url += str(version) + '-'
         url += platform.linux_distribution()[2] + '1_'
         if platform.architecture()[0] == '64bit':
             url += 'amd64.deb'
@@ -78,12 +81,12 @@ def _get_executable_url(version):
         del platform
     elif sys.is_windows():
         url = URL_DOWNLOAD
-        url += latest_version
+        url += str(version)
         url += '/Horus_'
         url += version + '.exe'
     elif sys.is_darwin():
         url = URL_DOWNLOAD
-        url += latest_version
+        url += str(version)
         url += '/Horus_'
         url += version + '.dmg'
     return url

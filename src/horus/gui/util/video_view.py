@@ -41,8 +41,8 @@ class VideoView(ImageView):
                             else:
                                 wx.CallAfter(self.set_frame, frame)
                     self._start()
-        except:
-            pass
+        except Exception as e:
+            print(e.message)
 
     def set_callback(self, callback):
         self.callback = callback

@@ -88,7 +88,7 @@ class PointCloudROI(object):
 
     def draw_cross(self, image):
         if self._center_v != 0 and self._center_u != 0 and self._show_center:
-            thickness = 3
+            thickness = 2
             v_max, u_max, _ = image.shape
             cv2.line(image, (0, self._center_v), (u_max, self._center_v), (200, 0, 0), thickness)
             cv2.line(image, (self._center_u, 0), (self._center_u, v_max), (200, 0, 0), thickness)

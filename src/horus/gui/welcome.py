@@ -65,7 +65,7 @@ class Header(wx.Panel):
         logo.set_image(wx.Image(resources.get_path_for_image("logo.png")))
         title_text = wx.StaticText(self, label=_("3D scanning for everyone"))
         title_font = title_text.GetFont()
-        title_font.SetPointSize(14)
+        title_font.SetPointSize(13)
         title_text.SetFont(title_font)
         separator = wx.StaticLine(self, -1, style=wx.LI_HORIZONTAL)
 
@@ -114,7 +114,6 @@ class CreateNew(wx.Panel):
         parent = self.GetParent().GetParent()
         parent.Hide()
         Wizard(parent.parent)
-        parent.Close()
 
     def on_scan(self, event):
         profile.settings['workbench'] = 'scanning'

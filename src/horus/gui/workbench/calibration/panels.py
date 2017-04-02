@@ -7,7 +7,8 @@ __license__ = 'GNU General Public License v2 http://www.gnu.org/licenses/gpl2.ht
 
 import wx._core
 
-from horus.gui.engine import driver, pattern, calibration_data
+from horus.gui.engine import driver, pattern, calibration_data, laser_triangulation, \
+    platform_extrinsics
 from horus.util import system as sys
 from horus.gui.util.custom_panels import ExpandablePanel, Slider, CheckBox, \
     FloatTextBox, FloatTextBoxArray, FloatLabel, FloatLabelArray, Button, \
@@ -59,6 +60,39 @@ class ScannerAutocheck(ExpandablePanel):
                                  has_undo=False, has_restore=False)
 
 
+class RotatingPlatform(ExpandablePanel):
+
+    def __init__(self, parent, on_selected_callback):
+        ExpandablePanel.__init__(
+            self, parent, _("Rotating platform"),
+            selected_callback=on_selected_callback, has_undo=False)
+
+    def add_controls(self):
+        self.add_control('motor_step_calibration', FloatTextBox,
+                         _("Step for laser and platform calibration"))
+        self.add_control('motor_speed_calibration', FloatTextBox,
+                         _("Speed for laser and platform calibration"))
+        self.add_control('motor_acceleration_calibration', FloatTextBox,
+                         _("Acceleration for laser and platform calibration"))
+
+    def update_callbacks(self):
+        self.update_callback('motor_step_calibration', self._set_step)
+        self.update_callback('motor_speed_calibration', self._set_speed)
+        self.update_callback('motor_acceleration_calibration', self._set_acceleration)
+
+    def _set_step(self, value):
+        laser_triangulation.motor_step = value
+        platform_extrinsics.motor_step = value
+
+    def _set_speed(self, value):
+        laser_triangulation.motor_speed = value
+        platform_extrinsics.motor_speed = value
+
+    def _set_acceleration(self, value):
+        laser_triangulation.motor_acceleration = value
+        platform_extrinsics.motor_acceleration = value
+
+
 class LaserTriangulation(ExpandablePanel):
 
     def __init__(self, parent, on_selected_callback):
@@ -79,8 +113,8 @@ class PlatformExtrinsics(ExpandablePanel):
                                  selected_callback=on_selected_callback, has_undo=False)
 
     def add_controls(self):
-        self.add_control('rotation_matrix', FloatLabelArray)
-        self.add_control('translation_vector', FloatLabelArray)
+        self.add_control('rotation_matrix', FloatTextBoxArray)
+        self.add_control('translation_vector', FloatTextBoxArray)
 
 
 class VideoSettings(ExpandablePanel):

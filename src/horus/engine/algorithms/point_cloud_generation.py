@@ -7,6 +7,7 @@ __license__ = 'GNU General Public License v2 http://www.gnu.org/licenses/gpl2.ht
 
 
 import numpy as np
+import cv2
 
 from horus import Singleton
 from horus.engine.calibration.calibration_data import CalibrationData
@@ -19,6 +20,9 @@ class PointCloudGeneration(object):
         self.calibration_data = CalibrationData()
 
     def compute_point_cloud(self, theta, points_2d, index):
+        if points_2d[0].size == 0 or points_2d[1].size == 0:
+            return None
+        
         # Load calibration values
         R = np.matrix(self.calibration_data.platform_rotation)
         t = np.matrix(self.calibration_data.platform_translation).T
@@ -29,10 +33,7 @@ class PointCloudGeneration(object):
         Rz = np.matrix([[c, -s, 0], [s, c, 0], [0, 0, 1]])
         Xw = Rz * Xwo
         # Return point cloud
-        if Xw.size > 0:
-            return np.array(Xw)
-        else:
-            return None
+        return np.array(Xw)
 
     def compute_platform_point_cloud(self, points_2d, R, t, index):
         # Load calibration values
@@ -40,17 +41,29 @@ class PointCloudGeneration(object):
         d = self.calibration_data.laser_planes[index].distance
         # Camera system
         Xc = self.compute_camera_point_cloud(points_2d, d, n)
-        # Compute platform transformation
+        # Transformation to platform system
         return R.T * Xc - R.T * t
 
     def compute_camera_point_cloud(self, points_2d, d, n):
-        # Load calibration values
-        fx = self.calibration_data.camera_matrix[0][0]
-        fy = self.calibration_data.camera_matrix[1][1]
-        cx = self.calibration_data.camera_matrix[0][2]
-        cy = self.calibration_data.camera_matrix[1][2]
+        if points_2d[0].size == 0 or points_2d[1].size == 0:
+            return np.array([]).reshape(3, 0)
+
         # Compute projection point
         u, v = points_2d
-        x = np.concatenate(((u - cx) / fx, (v - cy) / fy, np.ones(len(u)))).reshape(3, len(u))
-        # Compute laser intersection
-        return d / np.dot(n, x) * x
+        points_for_undistort = np.array([np.concatenate((u, v)).reshape(2, len(u)).T])
+        
+        # use opencv's undistortPoints, which incorporates the distortion coefficients
+        points_undistorted = cv2.undistortPoints(points_for_undistort, self.calibration_data.camera_matrix, self.calibration_data.distortion_vector)
+
+        u, v = np.hsplit(points_undistorted[0], points_undistorted[0].shape[1])
+        
+        # make homogenous coordinates
+        x = np.concatenate((u.T[0], v.T[0], np.ones(len(u)))).reshape(3, len(u))
+        # normalize to get unit direction vectors
+        cam_point_direction = x / np.linalg.norm(x, axis=0)
+        
+        # Compute laser intersection:
+        # dlc = dot(laser_normal, cam_point_direction) = projection of camera ray on laser-plane normal
+        # d / dlc = distance from cam center to 3D point
+        # cam_point_direction * d / dlc = 3D point
+        return d / np.dot(n, cam_point_direction) * cam_point_direction

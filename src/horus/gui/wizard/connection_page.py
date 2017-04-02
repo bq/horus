@@ -99,6 +99,14 @@ class ConnectionPage(WizardPage):
             driver.disconnect()
             self.update_status(driver.is_connected)
         else:
+            # If no camera id is selected
+            video_list = driver.camera.get_video_list()
+            current_video_id = profile.settings['camera_id']
+            if len(video_list) > 0:
+                if current_video_id not in video_list:
+                    profile.settings['camera_id'] = unicode(video_list[0])
+                    driver.camera.camera_id = int(profile.settings['camera_id'][-1:])
+
             driver.set_callbacks(
                 lambda: wx.CallAfter(self.before_connect),
                 lambda r: wx.CallAfter(self.after_connect, r))
@@ -157,7 +165,11 @@ class ConnectionPage(WizardPage):
                 dlg.ShowModal()
                 dlg.Destroy()
                 self.update_status(False)
+                wrong_camera_id = profile.settings['camera_id']
                 self.GetParent().parent.launch_preferences(basic=True)
+                # Do not save camera id if it is wrong
+                if profile.settings['camera_id'] == wrong_camera_id:
+                    profile.settings['camera_id'] = ''
             elif isinstance(result, CameraNotConnected):
                 dlg = wx.MessageDialog(
                     self, _("Please plug your camera in and try to connect again"),

@@ -28,12 +28,15 @@ Segmentation
 
 In this section you can adjust the parameters for the laser stripe segmentation during the scanning process.
 
+* **Draw line**: show the computed lines in red from the segmented laser image.
 * **Threshold**: remove all pixels which intensity is less that the threshold value.
 * **Blur**: blur with Normalized box filter. Kernel size: 2 * value + 1.
 * **Window**: filter pixels out of 2 * window value around the intensity peak.
 * **Refinement**: apply None or SGF algorithms for line smooth. SGF produces continous surfaces.
 
 .. image:: ../_static/workbenches/adjustment-scan-segmentation.png
+
+.. image:: ../_static/workbenches/adjustment-scan-segmentation-line.png
 
 Calibration adjustments
 -----------------------

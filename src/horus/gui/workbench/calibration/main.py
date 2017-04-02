@@ -8,11 +8,11 @@ __license__ = 'GNU General Public License v2 http://www.gnu.org/licenses/gpl2.ht
 from horus.util import profile
 
 from horus.gui.engine import driver, pattern, calibration_data, image_capture, image_detection, \
-    laser_segmentation
+    laser_segmentation, laser_triangulation, platform_extrinsics, combo_calibration
 from horus.gui.util.video_view import VideoView
 from horus.gui.workbench.workbench import Workbench
 from horus.gui.workbench.calibration.panels import PatternSettings, CameraIntrinsics, \
-    ScannerAutocheck, LaserTriangulation, PlatformExtrinsics, VideoSettings
+    ScannerAutocheck, RotatingPlatform, LaserTriangulation, PlatformExtrinsics, VideoSettings
 
 from horus.gui.workbench.calibration.pages.camera_intrinsics import CameraIntrinsicsPages
 from horus.gui.workbench.calibration.pages.scanner_autocheck import ScannerAutocheckPages
@@ -27,17 +27,26 @@ class CalibrationWorkbench(Workbench):
 
     def add_panels(self):
         self.add_panel(
-            'pattern_settings', PatternSettings, self.on_pattern_settings_selected)
+            'pattern_settings', PatternSettings,
+            self.on_pattern_settings_selected)
         self.add_panel(
-            'scanner_autocheck', ScannerAutocheck, self.on_scanner_autocheck_selected)
+            'scanner_autocheck', ScannerAutocheck,
+            self.on_scanner_autocheck_selected)
         self.add_panel(
-            'laser_triangulation', LaserTriangulation, self.on_laser_triangulation_selected)
+            'rotating_platform_settings', RotatingPlatform,
+            self.on_rotating_platform_settings_selected)
         self.add_panel(
-            'platform_extrinsics', PlatformExtrinsics, self.on_platform_extrinsics_selected)
+            'laser_triangulation', LaserTriangulation,
+            self.on_laser_triangulation_selected)
         self.add_panel(
-            'video_settings', VideoSettings, self.on_video_settings_selected)
+            'platform_extrinsics', PlatformExtrinsics,
+            self.on_platform_extrinsics_selected)
         self.add_panel(
-            'camera_intrinsics', CameraIntrinsics, self.on_camera_intrinsics_selected)
+            'video_settings', VideoSettings,
+            self.on_video_settings_selected)
+        self.add_panel(
+            'camera_intrinsics', CameraIntrinsics,
+            self.on_camera_intrinsics_selected)
 
     def add_pages(self):
         self.add_page('video_view', VideoView(self, self.get_image))
@@ -139,9 +148,22 @@ class CalibrationWorkbench(Workbench):
         calibration_data.set_resolution(width, height)
         calibration_data.camera_matrix = profile.settings['camera_matrix']
         calibration_data.distortion_vector = profile.settings['distortion_vector']
+        laser_triangulation.motor_step = profile.settings['motor_step_calibration']
+        laser_triangulation.motor_speed = profile.settings['motor_speed_calibration']
+        laser_triangulation.motor_acceleration = profile.settings['motor_acceleration_calibration']
+        platform_extrinsics.motor_step = profile.settings['motor_step_calibration']
+        platform_extrinsics.motor_speed = profile.settings['motor_speed_calibration']
+        platform_extrinsics.motor_acceleration = profile.settings['motor_acceleration_calibration']
+        combo_calibration.motor_step = profile.settings['motor_step_calibration']
+        combo_calibration.motor_speed = profile.settings['motor_speed_calibration']
+        combo_calibration.motor_acceleration = profile.settings['motor_acceleration_calibration']
 
     def on_pattern_settings_selected(self):
         profile.settings['current_panel_calibration'] = 'pattern_settings'
+        self._on_panel_selected(self.pages_collection['video_view'])
+
+    def on_rotating_platform_settings_selected(self):
+        profile.settings['current_panel_calibration'] = 'rotating_platform_settings'
         self._on_panel_selected(self.pages_collection['video_view'])
 
     def on_video_settings_selected(self):

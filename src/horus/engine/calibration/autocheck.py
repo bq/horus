@@ -5,7 +5,6 @@ __author__ = 'Jesús Arroyo Torrens <jesus.arroyo@bq.com>'
 __copyright__ = 'Copyright (C) 2014-2016 Mundo Reader S.L.'
 __license__ = 'GNU General Public License v2 http://www.gnu.org/licenses/gpl2.html'
 
-import time
 import numpy as np
 
 from horus import Singleton
@@ -47,6 +46,7 @@ class Autocheck(Calibration):
 
     def __init__(self):
         self.image = None
+        self.current_angle = 0
         Calibration.__init__(self)
 
     def _start(self):
@@ -54,6 +54,7 @@ class Autocheck(Calibration):
             ret = False
             response = None
             self.image = None
+            self.current_angle = 0
             self._is_calibrating = True
             self.image_capture.stream = False
 
@@ -71,6 +72,8 @@ class Autocheck(Calibration):
                 ret = True
             except Exception as exception:
                 response = exception
+                if isinstance(exception, CalibrationCancel):
+                    self._cancel()
             finally:
                 self._is_calibrating = False
                 self.image_capture.stream = True
@@ -82,6 +85,12 @@ class Autocheck(Calibration):
                     self._after_callback((ret, response))
                 self.image = None
 
+    def _cancel(self):
+        # Return to origin
+        if self.current_angle > 180:
+            self.current_angle = self.current_angle - 360
+        self.driver.board.motor_move(-self.current_angle)
+
     def check_pattern_and_motor(self):
         scan_step = 30
         patterns_detected = {}
@@ -92,6 +101,7 @@ class Autocheck(Calibration):
 
         # Capture data
         for i in xrange(0, 360, scan_step):
+            self.current_angle = i
             if not self._is_calibrating:
                 raise CalibrationCancel()
             image = self.image_capture.capture_pattern()

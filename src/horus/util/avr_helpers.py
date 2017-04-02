@@ -56,9 +56,14 @@ class AvrDude(object):
             if not char:
                 break
             out += char
+            if 'not in sync' in out or \
+               'Invalid' in out or \
+               'is not responding' in out:
+                break
             if char == '#':
                 if callback is not None:
                     callback()
+        p.kill()
         return out
 
     def flash(self, hex_path=None, clear_eeprom=False, callback=None):
@@ -74,6 +79,8 @@ class AvrDude(object):
             os.chdir(os.path.dirname(os.path.abspath(hex_path)))
             out = self._run_command(flags, callback)
             logger.info(' Upload completed')
+        except Exception as e:
+            print(e)
         finally:
             os.chdir(cwd)
         return out

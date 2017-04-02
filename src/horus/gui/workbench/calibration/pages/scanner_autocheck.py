@@ -111,9 +111,9 @@ class ScannerAutocheckPages(wx.Panel):
         scanner_autocheck.start()
 
     def on_cancel(self):
+        scanner_autocheck.cancel()
         self._initialize()
         self.video_page.right_button.Enable()
-        scanner_autocheck.cancel()
         if hasattr(self, 'wait_cursor'):
             del self.wait_cursor
         if self.exit_callback is not None:

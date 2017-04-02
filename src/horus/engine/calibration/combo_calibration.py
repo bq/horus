@@ -5,6 +5,7 @@ __author__ = 'Jesús Arroyo Torrens <jesus.arroyo@bq.com>'
 __copyright__ = 'Copyright (C) 2014-2016 Mundo Reader S.L.'
 __license__ = 'GNU General Public License v2 http://www.gnu.org/licenses/gpl2.html'
 
+import math
 import numpy as np
 
 from horus import Singleton
@@ -48,22 +49,25 @@ class ComboCalibration(MovingCalibration):
         if plane is not None:
             distance, normal, corners = plane
 
-            # Laser triangulation
-            if (angle > 65 and angle < 115):
-                self.image_capture.flush_laser()
-                self.image_capture.flush_laser()
+            # Angle between the pattern and the camera
+            alpha = np.rad2deg(math.acos(normal[2])) * math.copysign(1, normal[0])
+            if abs(alpha) < 30:
+                self.image_capture.flush_laser(14)
                 for i in xrange(2):
-                    image = self.image_capture.capture_laser(i)
-                    image = self.image_detection.pattern_mask(image, corners)
-                    self.image = image
-                    points_2d, _ = self.laser_segmentation.compute_2d_points(image)
-                    point_3d = self.point_cloud_generation.compute_camera_point_cloud(
-                        points_2d, distance, normal)
-                    if self._point_cloud[i] is None:
-                        self._point_cloud[i] = point_3d.T
-                    else:
-                        self._point_cloud[i] = np.concatenate(
-                            (self._point_cloud[i], point_3d.T))
+                    if (i == 0 and alpha < 10) or (i == 1 and alpha > -10):
+                        image = self.image_capture.capture_laser(i)
+                        image = self.image_detection.pattern_mask(image, corners)
+                        self.image = image
+                        points_2d, image = self.laser_segmentation.compute_2d_points(image)
+                        point_3d = self.point_cloud_generation.compute_camera_point_cloud(
+                            points_2d, distance, normal)
+                        if self._point_cloud[i] is None:
+                            self._point_cloud[i] = point_3d.T
+                        else:
+                            self._point_cloud[i] = np.concatenate(
+                                (self._point_cloud[i], point_3d.T))
+            else:
+                self.image = image
 
             # Platform extrinsics
             origin = corners[self.pattern.columns * (self.pattern.rows - 1)][0]

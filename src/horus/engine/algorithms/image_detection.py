@@ -19,6 +19,7 @@ class ImageDetection(object):
     def __init__(self):
         self.pattern = Pattern()
         self.calibration_data = CalibrationData()
+        self.chessboard_mask = None
 
         self._criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -70,6 +71,8 @@ class ImageDetection(object):
                 points = np.array([p1, p2, p4, p3])
                 cv2.fillConvexPoly(mask, points, 255)
                 image = cv2.bitwise_and(image, image, mask=mask)
+                if self.chessboard_mask is not None:
+                    image = cv2.bitwise_and(image, image, mask=self.chessboard_mask)
         return image
 
     def _detect_chessboard(self, image):
@@ -79,5 +82,9 @@ class ImageDetection(object):
                 ret, corners = cv2.findChessboardCorners(
                     gray, (self.pattern.columns, self.pattern.rows), flags=cv2.CALIB_CB_FAST_CHECK)
                 if ret:
+                    self.chessboard_mask = cv2.threshold(
+                        gray, gray.max() / 2, 255, cv2.THRESH_BINARY)[1]
                     cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), self._criteria)
                     return corners
+                else:
+                    self.chessboard_mask = None
