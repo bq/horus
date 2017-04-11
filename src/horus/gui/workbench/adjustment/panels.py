@@ -150,6 +150,7 @@ class ScanSegmentationPanel(ExpandablePanel):
 
     def add_controls(self):
         # self.add_control('red_channel_scanning', ComboBox)
+        self.add_control('color_channel_scanning', ComboBox)
         self.add_control(
             'threshold_value_scanning', Slider,
             _("Remove all pixels which intensity is less that the threshold value"))
@@ -172,6 +173,7 @@ class ScanSegmentationPanel(ExpandablePanel):
 
     def update_callbacks(self):
         # self.update_callback('red_channel_scanning', laser_segmentation.set_red_channel)
+        self.update_callback('color_channel_scanning', laser_segmentation.set_color_channel)
         self.update_callback('threshold_value_scanning', laser_segmentation.set_threshold_value)
         self.update_callback('threshold_enable_scanning', laser_segmentation.set_threshold_enable)
         self.update_callback('blur_value_scanning', laser_segmentation.set_blur_value)
@@ -192,6 +194,7 @@ class ScanSegmentationPanel(ExpandablePanel):
         laser_mode.set_exposure(profile.settings['exposure_laser_scanning'])
         image_capture.set_remove_background(profile.settings['remove_background_scanning'])
         laser_segmentation.set_red_channel(profile.settings['red_channel_scanning'])
+        laser_segmentation.set_color_channel(profile.settings['color_channel_scanning'])
         laser_segmentation.set_threshold_value(profile.settings['threshold_value_scanning'])
         laser_segmentation.set_threshold_enable(profile.settings['threshold_enable_scanning'])
         laser_segmentation.set_blur_value(profile.settings['blur_value_scanning'])

@@ -213,6 +213,9 @@ class Settings(collections.MutableMapping):
         # Hack to translate combo boxes:
         _('Texture')
         _('Laser')
+        _('Red')
+        _('Green')
+        _('Blue')
         self._add_setting(
             Setting('capture_mode_scanning', _('Capture mode'), 'profile_settings',
                     unicode, u'Texture', possible_values=(u'Texture', u'Laser')))
@@ -250,6 +253,10 @@ class Settings(collections.MutableMapping):
             Setting('red_channel_scanning', _('Red channel'), 'profile_settings',
                     unicode, u'R (RGB)',
                     possible_values=(u'R (RGB)', u'Cr (YCrCb)', u'U (YUV)')))
+        self._add_setting(
+            Setting('color_channel_scanning', _('Laser color'), 'profile_settings',
+                    unicode, u'Red',
+                    possible_values=(u'Red', u'Green', u'Blue')))
         self._add_setting(
             Setting('threshold_enable_scanning', _('Enable threshold'),
                     'profile_settings', bool, True))

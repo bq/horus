@@ -23,6 +23,7 @@ class LaserSegmentation(object):
         self.point_cloud_roi = PointCloudROI()
 
         self.red_channel = 'R (RGB)'
+        self.color_channel = 'Red'
         self.threshold_enable = False
         self.threshold_value = 0
         self.blur_enable = False
@@ -33,6 +34,9 @@ class LaserSegmentation(object):
 
     def set_red_channel(self, value):
         self.red_channel = value
+
+    def set_color_channel(self, value):
+        self.color_channel = value
 
     def set_threshold_enable(self, value):
         self.threshold_enable = value
@@ -86,8 +90,8 @@ class LaserSegmentation(object):
             # Apply ROI mask
             if roi_mask:
                 image = self.point_cloud_roi.mask_image(image)
-            # Obtain red channel
-            image = self._obtain_red_channel(image)
+            # Obtain laser channel (usually red)
+            image = self._obtain_laser_channel(image)
             if image is not None:
                 # Threshold image
                 image = self._threshold_image(image)
@@ -95,13 +99,18 @@ class LaserSegmentation(object):
                 image = self._window_mask(image)
             return image
 
-    def _obtain_red_channel(self, image):
+    def _obtain_laser_channel(self, image):
         ret = None
-        if self.red_channel == 'R (RGB)':
+    	# color channel takes priority over unused YCrCb and YUV tests
+        if self.color_channel == 'Green':
+            ret = cv2.split(image)[1]
+        elif self.color_channel == 'Blue':
+            ret = cv2.split(image)[2]
+        elif self.red_channel == 'R (RGB)':
             ret = cv2.split(image)[0]
-        elif self.red_channel == 'Cr (YCrCb)':
+        elif self.red_channel == 'Cr (YCrCb)':	# unused, UI code commented out
             ret = cv2.split(cv2.cvtColor(image, cv2.COLOR_RGB2YCR_CB))[1]
-        elif self.red_channel == 'U (YUV)':
+        elif self.red_channel == 'U (YUV)':		# unused, UI code commented out
             ret = cv2.split(cv2.cvtColor(image, cv2.COLOR_RGB2YUV))[1]
         return ret
 
