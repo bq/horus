@@ -109,6 +109,22 @@ msgstr "Remove background"
 msgid "Red channel"
 msgstr "Red channel"
 
+#: ../../src/horus/util/profile.py:250 ../../src/horus/util/profile.py:315
+msgid "Laser color"
+msgstr "Laser color"
+
+#: ../../src/horus/util/profile.py:250 ../../src/horus/util/profile.py:315
+msgid "Red"
+msgstr "Red"
+
+#: ../../src/horus/util/profile.py:250 ../../src/horus/util/profile.py:315
+msgid "Green"
+msgstr "Green"
+
+#: ../../src/horus/util/profile.py:250 ../../src/horus/util/profile.py:315
+msgid "Blue"
+msgstr "Blue"
+
 #: ../../src/horus/util/profile.py:254 ../../src/horus/util/profile.py:319
 msgid "Enable threshold"
 msgstr "Enable threshold"
