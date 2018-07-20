@@ -157,7 +157,7 @@ class CameraIntrinsics3DPlot(wx.Panel):
         self.canvas = FigureCanvasWxAgg(self, -1, self.fig)
         self.canvas.SetExtraStyle(wx.EXPAND)
 
-        self.ax = self.fig.gca(projection='3d', axisbg=(0.7490196, 0.7490196, 0.7490196, 1))
+        self.ax = self.fig.gca(projection='3d', facecolor=(0.7490196, 0.7490196, 0.7490196, 1))
 
         self.print_canvas()
 
