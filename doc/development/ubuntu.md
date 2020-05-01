@@ -96,7 +96,7 @@ or
 git clone git@github.com:bq/opencv.git
 ```
 
-And build it your own: [instructions](https://github.com/bqlabs/opencv/wiki/Build)
+And build it your own: [instructions](https://github.com/LibreScanner/opencv/wiki/Build)
 
 ## 3. Execute source code
 

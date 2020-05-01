@@ -31,7 +31,7 @@ setup(
 
     license='GPLv2',
     keywords="horus ciclop scanning 3d",
-    url='https://github.com/bqlabs/horus',
+    url='https://github.com/LibreScanner/horus',
 
     packages=find_packages('src'),
     package_dir={'': 'src'},

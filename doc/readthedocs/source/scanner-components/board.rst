@@ -22,7 +22,7 @@ ZUM SCAN Shield
 Horus Firmware
 --------------
 
-The firmware is an adaptation of Grbl. Source code is here: https://github.com/bqlabs/horus-fw.
+The firmware is an adaptation of Grbl. Source code is here: https://github.com/LibreScanner/horus-fw.
 
 It can be uploaded in **Preferences > Upload firmware**.
 

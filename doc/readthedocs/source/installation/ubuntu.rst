@@ -52,5 +52,5 @@ If there is a new release just execute
 
 .. _PPA Horus: https://launchpad.net/~bqlabs/+archive/ubuntu/horus/
 .. _PPA Horus dev: https://launchpad.net/~bqlabs/+archive/ubuntu/horus-dev/
-.. _custom OpenCV: https://github.com/bqlabs/opencv
-.. _reasons: https://github.com/bqlabs/opencv/wiki
+.. _custom OpenCV: https://github.com/LibreScanner/opencv
+.. _reasons: https://github.com/LibreScanner/opencv/wiki
