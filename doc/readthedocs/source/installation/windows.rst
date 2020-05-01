@@ -36,4 +36,4 @@ Reboot the computer to apply the changes.
    4. *Apply* and close the window.
 
 .. _Logitech Camera C270 Drivers: http://support.logitech.com/en_us/product/hd-webcam-c270
-.. _Horus installer: https://github.com/bqlabs/horus/releases/download/0.2rc1/Horus_0.2rc1.exe
+.. _Horus installer: https://github.com/LibreScanner/horus/releases/download/0.2rc1/Horus_0.2rc1.exe

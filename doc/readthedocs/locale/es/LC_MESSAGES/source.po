@@ -745,10 +745,10 @@ msgstr "Horus Firmware"
 #: ../../source/scanner-components/board.rst:25
 msgid ""
 "The firmware is an adaptation of Grbl. Source code is here: https://github."
-"com/bqlabs/horus-fw."
+"com/LibreScanner/horus-fw."
 msgstr ""
 "El firmware es una adaptación de Grbl. El código fuente está aquí: https://"
-"github.com/bqlabs/horus-fw."
+"github.com/LibreScanner/horus-fw."
 
 #: ../../source/scanner-components/board.rst:27
 msgid "It can be uploaded in **Preferences > Upload firmware**."

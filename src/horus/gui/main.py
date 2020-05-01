@@ -181,7 +181,7 @@ class MainWindow(wx.Frame):
         if profile.settings['check_for_updates']:
             self.Bind(wx.EVT_MENU, self.on_updates, self.menu_updates)
         self.Bind(wx.EVT_MENU, lambda e: webbrowser.open(
-            'https://github.com/bqlabs/horus'), self.menu_sources)
+            'https://github.com/LibreScanner/horus'), self.menu_sources)
 
     def on_launch_wizard(self, event):
         self.workbench[profile.settings['workbench']].on_close()

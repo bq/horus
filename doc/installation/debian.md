@@ -8,7 +8,7 @@ Versions: 8
 
 However it can be installed following the next instructions.
 
-First you need to build and install our [custom OpenCV](https://github.com/bqlabs/opencv/wiki/Build)
+First you need to build and install our [custom OpenCV](https://github.com/LibreScanner/opencv/wiki/Build)
 
 Then, generate the executable file following the next [instructions](../development/ubuntu.md).
 

@@ -28,4 +28,4 @@ Reboot the computer to apply the changes.
 
 
 .. _FTDI USB Drivers: http://www.ftdichip.com/Drivers/VCP/MacOSX/FTDIUSBSerialDriver_v2_3.dmg
-.. _Horus installer: https://github.com/bqlabs/horus/releases/download/0.2rc1/Horus_0.2rc1.dmg
+.. _Horus installer: https://github.com/LibreScanner/horus/releases/download/0.2rc1/Horus_0.2rc1.dmg

@@ -638,7 +638,7 @@ msgstr ""
 #: ../../source/scanner-components/board.rst:25
 msgid ""
 "The firmware is an adaptation of Grbl. Source code is here: "
-"https://github.com/bqlabs/horus-fw."
+"https://github.com/LibreScanner/horus-fw."
 msgstr ""
 
 #: ../../source/scanner-components/board.rst:27

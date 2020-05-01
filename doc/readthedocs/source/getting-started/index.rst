@@ -11,7 +11,7 @@ It provides a graphical interface that allows you to connect the scanner, contro
 
 It was created by `bqlabs`_, the Department of Innovation and Robotics at `BQ`_, developed in `Python`_ and released under the `GPLv2`_ license.
 
-.. _open 3D scanner Ciclop: https://github.com/bqlabs/ciclop
+.. _open 3D scanner Ciclop: https://github.com/LibreScanner/ciclop
 .. _bqlabs: https://github.com/bqlabs
 .. _BQ: http://www.bq.com
 .. _Python: https://www.python.org/
